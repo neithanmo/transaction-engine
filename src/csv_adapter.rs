@@ -20,8 +20,6 @@ use crate::record::{
 pub enum InputError {
     /// The header row lacks a required column.
     MissingColumn(&'static str),
-    /// Reading the underlying stream failed.
-    Io(io::Error),
     /// Any other CSV failure that is not about a single row.
     Csv(csv::Error),
 }
@@ -32,7 +30,6 @@ impl fmt::Display for InputError {
             InputError::MissingColumn(column) => {
                 write!(f, "input header is missing the `{column}` column")
             }
-            InputError::Io(e) => write!(f, "cannot read input: {e}"),
             InputError::Csv(e) => write!(f, "cannot read input: {e}"),
         }
     }
@@ -42,14 +39,7 @@ impl std::error::Error for InputError {}
 
 impl From<csv::Error> for InputError {
     fn from(error: csv::Error) -> Self {
-        if error.is_io_error() {
-            match error.into_kind() {
-                csv::ErrorKind::Io(e) => InputError::Io(e),
-                _ => unreachable!("is_io_error implies ErrorKind::Io"),
-            }
-        } else {
-            InputError::Csv(error)
-        }
+        InputError::Csv(error)
     }
 }
 
