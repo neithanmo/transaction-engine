@@ -223,7 +223,8 @@ impl<R: Read> RecordReader<R> {
 }
 
 /// Write the Account report: a header, then one row per Account in the
-/// order given, with every amount at four decimal places.
+/// order given. Amounts use [`Amount`]'s format: no trailing zeros, at
+/// least one decimal place.
 pub fn write_report<'a, W: Write>(
     output: W,
     accounts: impl Iterator<Item = (ClientId, &'a Account)>,

@@ -138,16 +138,21 @@ impl FromStr for Amount {
     }
 }
 
+/// Formats with trailing zeros dropped but at least one decimal place:
+/// `1.5`, `1.0001`, `2.0`, `0.0`, `-0.5`.
 impl fmt::Display for Amount {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // Work on the magnitude so the sign and the four-digit fraction are
-        // formatted independently; `unsigned_abs` copes with `i64::MIN`.
+        // Work on the magnitude so the sign and the fraction are formatted
+        // independently; `unsigned_abs` copes with `i64::MIN`.
         let magnitude = self.0.unsigned_abs();
         let scale = Self::SCALE as u64;
         if self.0 < 0 {
             f.write_str("-")?;
         }
-        write!(f, "{}.{:04}", magnitude / scale, magnitude % scale)
+        let fraction = format!("{:04}", magnitude % scale);
+        let fraction = fraction.trim_end_matches('0');
+        let fraction = if fraction.is_empty() { "0" } else { fraction };
+        write!(f, "{}.{fraction}", magnitude / scale)
     }
 }
 
@@ -252,36 +257,45 @@ mod tests {
         );
     }
 
-    // --- formatting: always four decimal places ---
+    // --- formatting: no trailing zeros, at least one decimal place ---
 
     fn shown(units: i64) -> String {
         Amount::from_units(units).to_string()
     }
 
     #[test]
-    fn formats_whole_number_with_four_decimals() {
-        assert_eq!(shown(50_000), "5.0000");
+    fn formats_whole_number_with_one_decimal_place() {
+        assert_eq!(shown(50_000), "5.0");
+        assert_eq!(shown(10_000_000), "1000.0");
     }
 
     #[test]
-    fn formats_with_trailing_decimal_digits() {
-        assert_eq!(shown(15_000), "1.5000");
+    fn formats_without_trailing_zeros() {
+        assert_eq!(shown(15_000), "1.5");
+        assert_eq!(shown(12_500), "1.25");
+        assert_eq!(shown(12_340), "1.234");
         assert_eq!(shown(12_345), "1.2345");
     }
 
     #[test]
+    fn keeps_zeros_inside_the_fraction() {
+        assert_eq!(shown(10_001), "1.0001");
+        assert_eq!(shown(10_100), "1.01");
+    }
+
+    #[test]
     fn formats_zero() {
-        assert_eq!(shown(0), "0.0000");
+        assert_eq!(shown(0), "0.0");
     }
 
     #[test]
     fn formats_negative() {
-        assert_eq!(shown(-800_000), "-80.0000");
+        assert_eq!(shown(-800_000), "-80.0");
     }
 
     #[test]
     fn formats_negative_between_minus_one_and_zero_with_leading_zero() {
-        assert_eq!(shown(-5_000), "-0.5000");
+        assert_eq!(shown(-5_000), "-0.5");
         assert_eq!(shown(-1), "-0.0001");
     }
 
