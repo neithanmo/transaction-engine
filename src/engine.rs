@@ -211,19 +211,18 @@ impl Engine {
     pub fn apply(&mut self, record: Record) -> Result<(), Rejection> {
         match record {
             Record::Transaction(transaction) => {
-                debug_assert!(
-                    transaction.amount > Amount::ZERO,
-                    "well-formed transactions carry a positive amount"
-                );
-                if !self.seen_transaction_ids.insert(transaction.transaction_id) {
+                if !self
+                    .seen_transaction_ids
+                    .insert(transaction.transaction_id())
+                {
                     return Err(Rejection::DuplicateTransactionId);
                 }
-                let account = self.accounts.entry(transaction.client).or_default();
-                match transaction.kind {
+                let account = self.accounts.entry(transaction.client()).or_default();
+                match transaction.kind() {
                     TransactionKind::Deposit => {
-                        account.apply_deposit(transaction.transaction_id, transaction.amount)
+                        account.apply_deposit(transaction.transaction_id(), transaction.amount())
                     }
-                    TransactionKind::Withdrawal => account.apply_withdrawal(transaction.amount),
+                    TransactionKind::Withdrawal => account.apply_withdrawal(transaction.amount()),
                 }
             }
             Record::DisputeAction(DisputeAction {
@@ -256,21 +255,27 @@ mod tests {
     }
 
     fn deposit(client: u16, transaction_id: u32, amt: &str) -> Record {
-        Record::Transaction(Transaction {
-            client: ClientId::new(client),
-            transaction_id: TransactionId::new(transaction_id),
-            kind: TransactionKind::Deposit,
-            amount: amount(amt),
-        })
+        Record::Transaction(
+            Transaction::new(
+                ClientId::new(client),
+                TransactionId::new(transaction_id),
+                TransactionKind::Deposit,
+                amount(amt),
+            )
+            .expect("positive test amount"),
+        )
     }
 
     fn withdrawal(client: u16, transaction_id: u32, amt: &str) -> Record {
-        Record::Transaction(Transaction {
-            client: ClientId::new(client),
-            transaction_id: TransactionId::new(transaction_id),
-            kind: TransactionKind::Withdrawal,
-            amount: amount(amt),
-        })
+        Record::Transaction(
+            Transaction::new(
+                ClientId::new(client),
+                TransactionId::new(transaction_id),
+                TransactionKind::Withdrawal,
+                amount(amt),
+            )
+            .expect("positive test amount"),
+        )
     }
 
     fn dispute_action(client: u16, transaction_id: u32, kind: DisputeKind) -> Record {

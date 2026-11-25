@@ -4,7 +4,9 @@
 //! carries an [`Amount`]) or a [`DisputeAction`] (a Dispute, Resolve or
 //! Chargeback, which carries no amount and targets a Deposit by its
 //! [`TransactionId`]). The split is structural: a `Transaction` cannot be
-//! built without an amount, and a `DisputeAction` has no amount field to set.
+//! built without a positive amount, and a `DisputeAction` has no amount field to set.
+
+use std::fmt;
 
 use crate::amount::Amount;
 
@@ -53,17 +55,68 @@ impl From<u32> for TransactionId {
     }
 }
 
-/// A Deposit or Withdrawal: owns a [`TransactionId`] and carries an [`Amount`].
+/// A Deposit or Withdrawal: owns a [`TransactionId`] and carries a positive [`Amount`].
+///
+/// The fields are private so [`Transaction::new`] is the only way to build one:
+/// every `Transaction` in existence has an amount greater than zero.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Transaction {
+    client: ClientId,
+    transaction_id: TransactionId,
+    kind: TransactionKind,
+    amount: Amount,
+}
+
+/// A Deposit or Withdrawal was given a zero or negative amount.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct NonPositiveAmount(pub Amount);
+
+impl fmt::Display for NonPositiveAmount {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "amount {} is not positive", self.0)
+    }
+}
+
+impl std::error::Error for NonPositiveAmount {}
+
+impl Transaction {
+    /// Build a Transaction, rejecting a zero or negative `amount`.
+    pub fn new(
+        client: ClientId,
+        transaction_id: TransactionId,
+        kind: TransactionKind,
+        amount: Amount,
+    ) -> Result<Self, NonPositiveAmount> {
+        if amount <= Amount::ZERO {
+            return Err(NonPositiveAmount(amount));
+        }
+        Ok(Transaction {
+            client,
+            transaction_id,
+            kind,
+            amount,
+        })
+    }
+
     /// The Client whose Account the Transaction touches.
-    pub client: ClientId,
+    pub fn client(&self) -> ClientId {
+        self.client
+    }
+
     /// The Transaction's globally unique id.
-    pub transaction_id: TransactionId,
+    pub fn transaction_id(&self) -> TransactionId {
+        self.transaction_id
+    }
+
     /// Whether it credits (Deposit) or debits (Withdrawal) the Account.
-    pub kind: TransactionKind,
-    /// The amount moved. Positivity is a business rule checked by the caller.
-    pub amount: Amount,
+    pub fn kind(&self) -> TransactionKind {
+        self.kind
+    }
+
+    /// The amount moved, always greater than zero.
+    pub fn amount(&self) -> Amount {
+        self.amount
+    }
 }
 
 /// Which way a [`Transaction`] moves funds.
@@ -105,4 +158,37 @@ pub enum Record {
     Transaction(Transaction),
     /// A Dispute, Resolve or Chargeback.
     DisputeAction(DisputeAction),
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn build(units: i64) -> Result<Transaction, NonPositiveAmount> {
+        Transaction::new(
+            ClientId::new(1),
+            TransactionId::new(1),
+            TransactionKind::Deposit,
+            Amount::from_units(units),
+        )
+    }
+
+    #[test]
+    fn positive_amount_builds_a_transaction() {
+        let transaction = build(1).expect("smallest positive amount is accepted");
+        assert_eq!(transaction.amount(), Amount::from_units(1));
+        assert_eq!(transaction.client(), ClientId::new(1));
+        assert_eq!(transaction.transaction_id(), TransactionId::new(1));
+        assert_eq!(transaction.kind(), TransactionKind::Deposit);
+    }
+
+    #[test]
+    fn zero_and_negative_amounts_are_rejected() {
+        for units in [0, -1, i64::MIN] {
+            assert_eq!(
+                build(units),
+                Err(NonPositiveAmount(Amount::from_units(units)))
+            );
+        }
+    }
 }

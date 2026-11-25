@@ -12,7 +12,8 @@ use csv::{ReaderBuilder, StringRecord, Trim};
 use crate::amount::{Amount, AmountParseError};
 use crate::engine::Account;
 use crate::record::{
-    ClientId, DisputeAction, DisputeKind, Record, Transaction, TransactionId, TransactionKind,
+    ClientId, DisputeAction, DisputeKind, NonPositiveAmount, Record, Transaction, TransactionId,
+    TransactionKind,
 };
 
 /// A fatal input problem: the stream cannot be read as Records at all.
@@ -57,7 +58,7 @@ pub enum Malformed {
     /// The `amount` field is not a valid Amount.
     InvalidAmount(AmountParseError),
     /// A Deposit or Withdrawal amount is zero or negative.
-    NonPositiveAmount(Amount),
+    NonPositiveAmount(NonPositiveAmount),
     /// The line is not valid UTF-8.
     InvalidUtf8,
 }
@@ -70,7 +71,7 @@ impl fmt::Display for Malformed {
             Malformed::InvalidClient(v) => write!(f, "invalid client `{v}`"),
             Malformed::InvalidTransactionId(v) => write!(f, "invalid transaction id `{v}`"),
             Malformed::InvalidAmount(e) => write!(f, "invalid amount: {e}"),
-            Malformed::NonPositiveAmount(a) => write!(f, "amount {a} is not positive"),
+            Malformed::NonPositiveAmount(e) => e.fmt(f),
             Malformed::InvalidUtf8 => f.write_str("line is not valid UTF-8"),
         }
     }
@@ -132,15 +133,9 @@ impl Columns {
             let amount: Amount = field(self.amount, AMOUNT)?
                 .parse()
                 .map_err(Malformed::InvalidAmount)?;
-            if amount <= Amount::ZERO {
-                return Err(Malformed::NonPositiveAmount(amount));
-            }
-            Ok(Record::Transaction(Transaction {
-                client,
-                transaction_id,
-                kind,
-                amount,
-            }))
+            Transaction::new(client, transaction_id, kind, amount)
+                .map(Record::Transaction)
+                .map_err(Malformed::NonPositiveAmount)
         };
         let dispute_action = |kind| {
             Ok(Record::DisputeAction(DisputeAction {

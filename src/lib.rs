@@ -18,5 +18,6 @@ pub use amount::{Amount, AmountParseError};
 pub use engine::{Account, Engine, Rejection};
 pub use pipeline::{FatalError, run};
 pub use record::{
-    ClientId, DisputeAction, DisputeKind, Record, Transaction, TransactionId, TransactionKind,
+    ClientId, DisputeAction, DisputeKind, NonPositiveAmount, Record, Transaction, TransactionId,
+    TransactionKind,
 };
