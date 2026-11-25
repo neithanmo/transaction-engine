@@ -24,6 +24,7 @@ flowchart LR
 | File | Tool | Scope |
 | --- | --- | --- |
 | [`20261124_setup_project_skills.md`](./20261124_setup_project_skills.md) | Claude Code | Repo skill setup, `/grill-with-docs` alignment, glossary/ADR modeling, and spec breakdown |
-| [`20261124_implement_3.md`](./20261124_implement_3.md) | Claude Code | `/implement #3` — hand-derived acceptance fixture CSV pairs (data only) |
-| [`20261125_implement_issue_5_antigravity.md`](./20261125_implement_issue_5_antigravity.md) | Antigravity | `/implement #5` — `Engine` transactions (deposits, withdrawals, duplicate IDs, locking, overflow) |
-| [`20261124_implement_6.md`](./20261124_implement_6.md) | Claude Code | `/implement #6` — `Engine` dispute lifecycle (dispute, resolve, chargeback) |
+| [`20261124_implement_3.md`](./20261124_implement_3.md) | Claude Code | `/implement #3` and `#4`; hand-derived acceptance fixtures and domain primitives (`Amount`, IDs, and records) |
+| [`20261125_implement_issue_5_antigravity.md`](./20261125_implement_issue_5_antigravity.md) | Antigravity | `/implement #5`; `Engine` transactions (deposits, withdrawals, duplicate IDs, locking, and overflow) |
+| [`20261124_implement_6.md`](./20261124_implement_6.md) | Claude Code | `/implement #6` and `#7`; dispute lifecycle, CSV pipeline, fixture harness, and CLI |
+| [`2026-11-25-144956-in-this-transaction-engine-letss-add-some-more-f.txt`](./2026-11-25-144956-in-this-transaction-engine-letss-add-some-more-f.txt) | Claude Code | Additional fixtures, `Transaction::new` validation, and fuzzing for amounts, engine state, and the CSV pipeline |
