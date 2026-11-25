@@ -1,0 +1,370 @@
+ ▐▛███▛█   Claude Code v2.1.332
+▝▜██████▀  Opus 5.5 · Claude Pro
+ ▝▝   ▝▝   ~/Documents/Projects/transaction-engine
+
+⚠ Your login expires in 2 days · run /login to renew
+
+❯ in this transaction engine, letss add some more fixture to test interesting   
+  corner cases that our current testing setup does not exercise:                
+     - decimal-shorthand-and-trailing-zeros.{input,expected}.csv — exercises    
+  .5, 5., and >4 trailing zeros                                                 
+     - dispute-ignores-populated-or-garbage-amount.{input,expected}.csv —       
+  exercises ignored 4th column on dispute/resolve                               
+     - multi-deposit-partial-chargeback-and-debt-recovery.{input,expected}.csv  
+  — exercises simultaneous disputes, partial resolve + chargeback, and debt     
+  paydown on a locked account                                                   
+  and probably check resolved is handled too?                                   
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● These three fixtures already exist (untracked). Let me check they pass and
+  match the documented rules before adding more.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● The three existing fixtures pass, and I re-derived each by hand and they're
+  correct. Next I'm checking which resolve paths the current fixtures already
+  cover.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Resolve-case tests are still missing for settled deposits, double resolves,
+  post-chargeback, withdrawals, unknown or foreign transactions, unknown
+  clients, locked accounts, and negative available funds. I'm checking how
+  negative numbers print next. · summary
+
+  Read 1 file (ctrl+o to expand)
+
+● Bash(cd /home/neithanmo/Documents/Projects/transaction-engine/tests/fixtures
+      && cat > resolve-rejected-outside-disputed-state.input.csv <<'EOF'
+      type,client,tx,amount…)
+  ⎿  running 1 test
+     test every_fixture_produces_its_expected_report ... ok
+     … +2 lines (ctrl+o to expand)
+  ⎿  Created
+     tests/fixtures/resolve-rejected-outside-disputed-state.input.csv +12
+       1 +type,client,tx,amount                                          
+       2 +deposit,1,1,40.0                                               
+       3 +resolve,1,1                                                    
+       4 +dispute,1,1                                                    
+       5 +dispute,1,1                                                    
+       6 +resolve,1,1                                                    
+       7 +resolve,1,1                                                    
+       8 +deposit,1,2,10.0                                               
+       9 +dispute,1,2                                                    
+      10 +chargeback,1,2                                                 
+      11 +resolve,1,2                                                    
+      12 +dispute,1,2                                                    
+  ⎿  Created
+     tests/fixtures/resolve-rejected-outside-disputed-state.expected.csv +2
+      1 +client,available,held,total,locked                              
+      2 +1,40.0,0.0,40.0,true                                            
+  ⎿  Created tests/fixtures/resolve-wrong-target-rejected.input.csv +9
+      1 +type,client,tx,amount                                           
+      2 +deposit,2,10,20.0                                               
+      3 +withdrawal,2,11,5.0                                             
+      4 +dispute,2,10                                                    
+      5 +resolve,2,11                                                    
+      6 +resolve,2,99                                                    
+      7 +resolve,3,10                                                    
+      8 +deposit,1,20,1.0                                                
+      9 +resolve,1,10                                                    
+  ⎿  Created tests/fixtures/resolve-wrong-target-rejected.expected.csv +3
+      1 +client,available,held,total,locked                              
+      2 +1,1.0,0.0,1.0,false                                             
+      3 +2,-5.0,20.0,15.0,false                                          
+  ⎿  Created
+     tests/fixtures/resolve-on-locked-account-and-from-negative.input.csv
+     +12
+       1 +type,client,tx,amount                                          
+       2 +deposit,1,1,100.0                                              
+       3 +withdrawal,1,2,80.0                                            
+       4 +dispute,1,1                                                    
+       5 +resolve,1,1                                                    
+       6 +deposit,1,3,30.0                                               
+       7 +deposit,1,4,10.0                                               
+       8 +dispute,1,3                                                    
+       9 +dispute,1,4                                                    
+      10 +chargeback,1,4                                                 
+      11 +resolve,1,3                                                    
+      12 +withdrawal,1,5,1.0                                             
+  ⎿  … +1 file changed
+     tests/fixtures/resolve-on-locked-account-and-from-negative.expected.cs
+     v
+
+● Now a quick check that the harness actually picks up the new files: I'll break
+  one expected file on purpose and confirm the test fails.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● The harness picks them up. Now I'll document the new fixtures in the fixtures
+  README table, and update the count in the main README.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● All of the untracked fixtures are correct too, so I'll document all nine.
+
+● Update(tests/fixtures/README.md)
+  ⎿  Couldn't edit file
+
+● Bash(sed -i 's/13 hand-derived CSV input\/expected pairs/22 hand-derived CSV
+      input\/expected pairs/' README.md && cat >> tests/fixtures/README.md
+      <<'EOF'
+      - `resolve-…)
+  ⎿  test result: ok. 53 passed; 0 failed; 0 ignored; 0 measured; 0 filtere
+     d out; finished in 0.00s
+     test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered
+     … +11 lines (ctrl+o to expand)
+  ⎿  Updated README.md +1 -1
+      104  Run the full test suite with `cargo test`:
+      105 
+      106  - **Unit tests** (`src/amount.rs`, `src/engine.rs`): fixed-poi
+           nt parsing/formatting edge cases, checked overflow, and every
+           deposit/withdrawal/dispute/resolve/chargeback state transition
+           .
+      107 -- **Acceptance fixtures** (`tests/fixtures/`): 13 hand-derived
+          - CSV input/expected pairs covering the spec example, negative 
+          -balances after chargeback, locked-account behavior, cross-clie
+          -nt/withdrawal                                                 
+      107 +- **Acceptance fixtures** (`tests/fixtures/`): 22 hand-derived
+          + CSV input/expected pairs covering the spec example, negative 
+          +balances after chargeback, locked-account behavior, cross-clie
+          +nt/withdrawal                                                 
+      108  disputes, duplicate IDs, formatting, malformed rows, and amoun
+           t edge cases.
+      109  - **Pipeline & CLI tests** (`tests/pipeline.rs`, `tests/cli.rs
+           `): exit codes, stdout/stderr separation, missing headers, and
+            mid-stream I/O failures writing nothing to stdout.
+      110  - **Volume & noise-invariance test** (`tests/large_stream.rs`)
+           : streams interleaved cohorts with closed-form expected balanc
+           es and verifies injected noise has zero effect. Run the large
+           10,000-client /
+  ⎿  Updated tests/fixtures/README.md +8
+      48    Client 3 never appears because its Deposit reused id `3`.
+      49  - `amount-edge-cases`: Client 1 is `1.2345 + 2.5`; the two 900-
+          trillion Deposits for
+      50    Client 2 overflow on the second, so only the first (`90000000
+          0000000.0`) stands.
+      51 +- `resolve-rejected-outside-disputed-state`: every Rejected Res
+         +olve would, if applied, move                                   
+      52 +  money out of an empty Held (or re-credit a charged-back 10), 
+         +so the final `40.0` / `0.0`                                    
+      53 +  only holds if all of them are skipped.                       
+      54 +- `resolve-wrong-target-rejected`: Client 2 is `20 − 5 = 15`, w
+         +ith the Deposit still Disputed                                 
+      55 +  (`-5.0` Available, `20.0` Held); Client 3 never appears.     
+      56 +- `resolve-on-locked-account-and-from-negative`: `100 − 80 = 20
+         +`, Dispute → `−80/100`, Resolve → `20/0`;                      
+      57 +  Deposits 30 and 10 → `60`; both Disputed → `20/40`; Chargebac
+         +k of 10 → `20/30`, Locked;                                     
+      58 +  Resolve of 30 → `50/0`; the final Withdrawal is Rejected.    
+
+● The table edit missed because that row ends with the Rule column. Retrying
+  with the full row ending:
+
+● Update(tests/fixtures/README.md)
+  ⎿  Added 9 lines
+      37  | `input-formatting` | Whitespace around fields, reordered colu
+          mns, and Dispute rows with no trailing amount column are all ac
+          cepted. | README *Input and errors* (US 9–12) |
+      38  | `malformed-rows` | Unknown type, an unparsable amount, a Reco
+          rd missing fields, and invalid UTF-8 are skipped as Malformed a
+          nd never create an Account, while valid Records around them sti
+          ll apply. The input file contains a raw invalid byte. | README
+          *Input and errors* → Malformed (US 13, 14) |
+      39  | `amount-edge-cases` | Four decimals and trailing zeros beyond
+           four are accepted exactly; five significant decimals, zero, ne
+          gative and missing amounts are Malformed; a Deposit that would
+          overflow is Rejected. | README *Amounts* (US 15–20) |
+      40 +| `decimal-shorthand-and-trailing-zeros` | `.5`, `5.` and more 
+         +than four trailing zeros (`1.2345000`) parse exactly; sums to `
+         +6.0`. | README *Amounts* |                                     
+      41 +| `dispute-ignores-populated-or-garbage-amount` | A populated o
+         +r unparsable 4th column on a Dispute or Resolve is ignored; the
+         + full Deposit amount is Held. | README *Input and errors* |    
+      42 +| `multi-deposit-partial-chargeback-and-debt-recovery` | Two si
+         +multaneous Disputes; one Resolved, one Charged back; a later De
+         +posit pays the debt down on the Locked Account while a Withdraw
+         +al is still Rejected. | README *Balances can go negative*, *Loc
+         +ked Accounts* |                                                
+      43 +| `active-held-funds-at-eof` | A Dispute still open at end of i
+         +nput is reported as Held. | README *Deposit lifecycle* |       
+      44 +| `header-only-zero-accounts` | A header-only file prints only 
+         +the output header. | README *Input and errors* |               
+      45 +| `u16-u32-zero-and-max-boundaries` | Client and tx ids at `0` 
+         +and at `u16`/`u32` max are accepted. | README *Input and errors
+         +* |                                                            
+      46 +| `resolve-rejected-outside-disputed-state` | Resolve of a Sett
+         +led Deposit, a second Resolve, and a Resolve or Dispute after C
+         +hargeback are all Rejected; so is a Dispute of an already-Dispu
+         +ted Deposit. | README *Deposit lifecycle* |                    
+      47 +| `resolve-wrong-target-rejected` | Resolve targeting a Withdra
+         +wal, an unknown tx, another Client's Deposit, or from an unknow
+         +n Client is Rejected and creates no Account. | README *A Disput
+         +e action must come from the Deposit's owner*; ADR 0001 |       
+      48 +| `resolve-on-locked-account-and-from-negative` | Resolve resto
+         +res a negative Available; a Resolve on a Locked Account still r
+         +eleases Held funds. | README *Locked Accounts* |               
+      49 
+      50  ### Notes on hand-derived values
+      51 
+
+● I added three fixtures for resolve corner cases. The three you listed were
+  already in tests/fixtures/ as untracked files, alongside three others. I
+  worked each one out by hand and they're all correct. cargo test passes, and I
+  confirmed the harness picks up the new files by breaking one expected value
+  and watching the test fail.
+
+  The three you listed (existing, checked):
+  - decimal-shorthand-and-trailing-zeros: .5 + 5. + 0.0001 + 1.2345000 − 0.7346 
+    = 6.0.
+  - dispute-ignores-populated-or-garbage-amount: the full 50 and 30 are held,
+    whatever is in the 4th column.
+  - multi-deposit-partial-chargeback-and-debt-recovery: ends at 5.0, locked,
+    which matches.
+
+  New resolve fixtures. Before this, the fixtures only tested resolve when it
+  succeeds (dispute → resolve, then dispute again or chargeback).
+  - resolve-rejected-outside-disputed-state: resolve on a deposit that was never
+    disputed, a second resolve in a row, and resolve or dispute after a
+    chargeback are all rejected. So is disputing a deposit that's already under
+    dispute. If any of these were wrongly applied, held would go negative or the
+    charged-back 10 would come back, so the final 40.0 / 0.0 only holds if
+    every one is skipped.
+  - resolve-wrong-target-rejected: resolve aimed at a withdrawal, an unknown tx,
+    or another client's disputed deposit is rejected. A resolve from a client
+    with no account doesn't create one. Client 2's deposit stays disputed at
+    -5.0 / 20.0.
+  - resolve-on-locked-account-and-from-negative: a resolve brings available back
+    from -80 to 20. After a chargeback locks the account, resolving a second
+    open dispute still releases its held funds, ending at 50.0 / 0.0, locked.
+
+  Docs: I added all nine untracked fixtures to the table in
+  tests/fixtures/README.md, with working notes for the three new ones. I also
+  changed the fixture count in the main README.md from 13 to 22.
+
+  The fixture that ignores a populated or garbage amount on dispute/resolve rows
+  tests behaviour the README never states. It only says those rows may leave
+  the amount column out. If ignoring the amount is the intended rule, it's worth
+  adding a line to Input and errors.
+
+  Nothing is committed yet.
+
+✻ Crunched for 1m 20s · done 1:14 PM
+
+※ recap: You wanted more fixtures for untested corner cases; your three were correct, and I added three resolve fixtures plus docs, all passing and uncommitted. Next, decide whether the README should say dispute and resolve ignore the amount column, then commit. (turn off recaps in /config)
+
+❯ add the ignored-amount rule to the README and commit.                         
+  this would make even clear our assumption. not that strict while preserving   
+  the spec behavior that it describes.                                          
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● The README's Amounts section already covers dispute amounts, but not
+  unparsable ones, which the fixture tests treat as Malformed. I'm checking that
+  the parser handles chargebacks the same way. · summary
+
+  Searched for 1 pattern, ran 1 shell command (ctrl+o to expand)
+
+● Confirmed: on dispute, resolve and chargeback rows the amount field is never
+  read. I'll spell the rule out in Input and errors and have the Amounts line
+  point to it.
+
+● Bash(python3 - <<'EOF'
+      p='README.md'; s=open(p).read()…)
+  ⎿  diff --git a/README.md b/README.md
+     index cdf0358..7be526d 100644
+     --- a/README.md
+     … +52 lines (ctrl+o to expand)
+  ⎿  Updated README.md +3 -3
+      59 
+      60  A Record that would overflow Available, Held or Total is Reject
+          ed.
+      61 
+      62 -An amount on a Dispute action is ignored.                      
+      62 +An amount on a Dispute action is ignored (see [Input and errors
+         +](#input-and-errors)).                                         
+      63 
+      64  ## Input and errors
+      65 
+      66 -Whitespace around fields and headers is trimmed, columns are ma
+         -tched by header name, and Dispute actions may omit the trailing
+         - amount column. Header names and `type` values are case-sensiti
+         -ve. Headers must include lowercase `type`, `client`, `tx` and `
+         -amount`; type values must be lowercase `deposit`, `withdrawal`,
+         - `dispute`, `resolve` or `chargeback`.                         
+      66 +Whitespace around fields and headers is trimmed, columns are ma
+         +tched by header name, and Dispute actions may omit the trailing
+         + amount column. When a Dispute, Resolve or Chargeback does carr
+         +y an amount, it is ignored and never parsed: a Dispute action a
+         +lways refers to the full amount of the Deposit it targets, so `
+         +dispute,1,1,5.0` holds the whole Deposit and `resolve,1,1,not_a
+         +_number` is a valid Resolve, not a Malformed Record. This is lo
+         +oser than requiring the column to be empty, but it keeps the sp
+         +ec's behaviour, where the amount comes from the original Deposi
+         +t, and avoids discarding a genuine payment-partner action over 
+         +a field the engine never uses. Header names and `type` values a
+         +re case-sensitive. Headers must include lowercase `type`, `clie
+         +nt`, `tx` and `amount`; type values must be lowercase `deposit`
+         +, `withdrawal`, `dispute`, `resolve` or `chargeback`.          
+      67 
+      68  | Outcome | Examples | Effect |
+      69  | --- | --- | --- |
+      70  | **Fatal** | wrong arguments, unreadable or empty file, missin
+          g or incorrectly cased header columns, I/O error mid-stream | e
+          xit non-zero, nothing on stdout |
+      71 -| **Malformed** | unknown or incorrectly cased type value, unpa
+         -rsable number, missing field, invalid UTF-8 | Record skipped, w
+         -arning on stderr (the first 100, then one line counting the res
+         -t) |                                                           
+      71 +| **Malformed** | unknown or incorrectly cased type value, unpa
+         +rsable number (other than a Dispute action's ignored amount), m
+         +issing field, invalid UTF-8 | Record skipped, warning on stderr
+         + (the first 100, then one line counting the rest) |            
+      72  | **Rejected** | insufficient funds, duplicate id, no such Depo
+          sit, wrong lifecycle state, Withdrawal from a Locked Account, o
+          verflow | Record skipped |
+      73 
+      74  An empty file is Fatal because it has no header. A file contain
+          ing only a valid header succeeds with zero Accounts and writes
+          only the output header.
+
+● Now the commit. I'm staging only the fixtures and the two READMEs, and leaving
+  .claude/, ASSUMPTIONS.md and artifacts/ out. Since we're on main, I'll commit
+  on a new branch.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● I've added the ignored-amount rule to the README and committed everything as
+  4ad0000 on a new branch, test/resolve-and-input-fixtures. I branched instead
+  of committing to main because my rules for this setup say to branch before
+  committing on the default branch. If you'd rather keep it on main, run git 
+  switch main && git merge --ff-only test/resolve-and-input-fixtures. The full
+  test suite passes.
+
+  README changes:
+  - Input and errors now says that an amount on a dispute, resolve or chargeback
+    row is ignored and never parsed. The action always applies to the full
+    amount of the original deposit. So dispute,1,1,5.0 holds the whole deposit,
+    and resolve,1,1,not_a_number is a valid resolve, not a malformed row. It
+    also gives your reason: this is looser than requiring the column to be
+    empty, but it keeps the behaviour the spec describes and doesn't throw away
+    a real payment-partner action over a field the engine never reads.
+  - Amounts already had the line "An amount on a Dispute action is ignored." I
+    left it and added a link to the new section.
+  - The Malformed row in the error table now excludes this ignored amount from
+    "unparsable number".
+
+  I checked the code before writing this. In src/csv_adapter.rs, the amount
+  field is only read for deposits and withdrawals, so the README now describes
+  what the engine actually does.
+
+  What's in the commit: both README files plus all 18 fixture CSVs, which are
+  the 9 pairs. I left .claude/, ASSUMPTIONS.md and artifacts/ uncommitted
+  because they weren't part of this change.
+
+✻ Cooked for 31s · done 1:37 PM
+
+❯ /export                                                                       
+  ⎿  Export cancelled
+※ recap: We added corner-case test fixtures, including resolve cases, and wrote the ignored dispute-amount rule into the README. Everything is committed and passing on branch test/resolve-and-input-fixtures. Next, decide whether to merge it into main or open a pull request. (turn off recaps in /config)
