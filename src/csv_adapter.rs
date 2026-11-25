@@ -160,7 +160,7 @@ impl Columns {
             }))
         };
 
-        match kind.to_ascii_lowercase().as_str() {
+        match kind {
             "deposit" => transaction(TransactionKind::Deposit),
             "withdrawal" => transaction(TransactionKind::Withdrawal),
             "dispute" => dispute_action(DisputeKind::Dispute),
