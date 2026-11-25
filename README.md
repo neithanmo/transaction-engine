@@ -59,16 +59,16 @@ These Records are Malformed, because their amount never becomes a valid Amount:
 
 A Record that would overflow Available, Held or Total is Rejected.
 
-An amount on a Dispute action is ignored.
+An amount on a Dispute action is ignored (see [Input and errors](#input-and-errors)).
 
 ## Input and errors
 
-Whitespace around fields and headers is trimmed, columns are matched by header name, and Dispute actions may omit the trailing amount column. Header names and `type` values are case-sensitive. Headers must include lowercase `type`, `client`, `tx` and `amount`; type values must be lowercase `deposit`, `withdrawal`, `dispute`, `resolve` or `chargeback`.
+Whitespace around fields and headers is trimmed, columns are matched by header name, and Dispute actions may omit the trailing amount column. When a Dispute, Resolve or Chargeback does carry an amount, it is ignored and never parsed: a Dispute action always refers to the full amount of the Deposit it targets, so `dispute,1,1,5.0` holds the whole Deposit and `resolve,1,1,not_a_number` is a valid Resolve, not a Malformed Record. This is looser than requiring the column to be empty, but it keeps the spec's behaviour, where the amount comes from the original Deposit, and avoids discarding a genuine payment-partner action over a field the engine never uses. Header names and `type` values are case-sensitive. Headers must include lowercase `type`, `client`, `tx` and `amount`; type values must be lowercase `deposit`, `withdrawal`, `dispute`, `resolve` or `chargeback`.
 
 | Outcome | Examples | Effect |
 | --- | --- | --- |
 | **Fatal** | wrong arguments, unreadable or empty file, missing or incorrectly cased header columns, I/O error mid-stream | exit non-zero, nothing on stdout |
-| **Malformed** | unknown or incorrectly cased type value, unparsable number, missing field, invalid UTF-8 | Record skipped, warning on stderr (the first 100, then one line counting the rest) |
+| **Malformed** | unknown or incorrectly cased type value, unparsable number (other than a Dispute action's ignored amount), missing field, invalid UTF-8 | Record skipped, warning on stderr (the first 100, then one line counting the rest) |
 | **Rejected** | insufficient funds, duplicate id, no such Deposit, wrong lifecycle state, Withdrawal from a Locked Account, overflow | Record skipped |
 
 An empty file is Fatal because it has no header. A file containing only a valid header succeeds with zero Accounts and writes only the output header.
@@ -104,7 +104,7 @@ No `unsafe` code is used anywhere in the crate. Production paths contain no `unw
 Run the full test suite with `cargo test`:
 
 - **Unit tests** (`src/amount.rs`, `src/engine.rs`): fixed-point parsing/formatting edge cases, checked overflow, and every deposit/withdrawal/dispute/resolve/chargeback state transition.
-- **Acceptance fixtures** (`tests/fixtures/`): 13 hand-derived CSV input/expected pairs covering the spec example, negative balances after chargeback, locked-account behavior, cross-client/withdrawal
+- **Acceptance fixtures** (`tests/fixtures/`): 22 hand-derived CSV input/expected pairs covering the spec example, negative balances after chargeback, locked-account behavior, cross-client/withdrawal
 disputes, duplicate IDs, formatting, malformed rows, and amount edge cases.
 - **Pipeline & CLI tests** (`tests/pipeline.rs`, `tests/cli.rs`): exit codes, stdout/stderr separation, missing headers, and mid-stream I/O failures writing nothing to stdout.
 - **Volume & noise-invariance test** (`tests/large_stream.rs`): streams interleaved cohorts with closed-form expected balances and verifies injected noise has zero effect. Run the large 10,000-client /
