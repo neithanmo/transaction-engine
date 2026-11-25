@@ -36,17 +36,21 @@ Any well-formed Deposit or Withdrawal creates its Client's Account, even if the 
 
 A Withdrawal needs Available ≥ amount. A Dispute does not: if a Client deposits 100, withdraws 80, and the Deposit is then disputed, Available becomes −80 and Held becomes 100. A Chargeback then leaves Total at −80, which is a debt the Client owes. Refusing the Dispute instead would let exactly the fraud this engine exists to catch go through. Held never goes negative.
 
+### Locked Accounts
+
 A Chargeback Locks the Account permanently. A Locked Account:
 
 - **rejects Withdrawals**, so no further funds can leave an Account that has suffered a Chargeback;
 - **still accepts Deposits**. Incoming funds carry no risk to the engine, and they can pay down a negative balance that a Chargeback left behind. Refusing them would strand money the Client is sending in;
 - **still accepts Disputes, Resolves and Chargebacks**. These come from the payment partner, not the Client, so freezing the Account cannot stop them. Refusing a Resolve would leave funds Held forever, and refusing a Chargeback would let a reversed Deposit stand.
 
+This follows how major exchanges and payment processors handle chargeback restrictions in practice: outflows are suspended immediately, while inbound deposits remain open so the account holder can settle the outstanding balance and payment-rail notifications continue to be processed.
+
 An Account is never unlocked.
 
 ### Amounts
 
-Amounts are fixed-point integers in units of 0.0001, stored in an `i64` (up to about 922 trillion), and parsed without going through floating point, so no rounding ever happens. See [ADR 0002](./docs/adr/0002-amounts-are-fixed-point-i64.md).
+Amounts are fixed-point integers in units of 0.0001, stored in an `i64` this gives us up to `i64::MAX` range(up to about 922 trillion), and parsed without going through floating point, so no rounding ever happens. See [ADR 0002](./docs/adr/0002-amounts-are-fixed-point-i64.md).
 
 These Records are Malformed, because their amount never becomes a valid Amount:
 
@@ -59,12 +63,12 @@ An amount on a Dispute action is ignored.
 
 ## Input and errors
 
-Whitespace around fields and headers is trimmed, columns are matched by header name, Dispute actions may omit the trailing amount column, and the `type` is case-insensitive.
+Whitespace around fields and headers is trimmed, columns are matched by header name, Dispute actions may omit the trailing amount column.
 
 | Outcome | Examples | Effect |
-|---|---|---|
+| --- | --- | --- |
 | **Fatal** | wrong arguments, unreadable file, missing header columns, I/O error mid-stream | exit non-zero, nothing on stdout |
-| **Malformed** | unknown type, unparsable number, missing field, invalid UTF-8 | Record skipped, warning on stderr |
+| **Malformed** | unknown type, case mismatch, unparsable number, missing field, invalid UTF-8 | Record skipped, warning on stderr (the first 100, then one line counting the rest) |
 | **Rejected** | insufficient funds, duplicate id, no such Deposit, wrong lifecycle state, Withdrawal from a Locked Account, overflow | Record skipped |
 
 A fatal error prints nothing, because balances from a half-read file would look final but be wrong. CSV has no framing, so a stream truncated mid-line cannot be told apart from a short row: it shows up as a Malformed Record, or, if cut inside the amount (`1.` for `1.5`), it is silently read as a smaller value.
@@ -76,3 +80,35 @@ Output rows are sorted by client id. Amounts are printed without trailing zeros 
 The engine is fed one Record at a time and never holds the input in memory. Its memory grows with the number of Transactions: one id per Transaction for the uniqueness check, plus each applied Deposit, kept for the whole run because the spec sets no time limit on disputes. For inputs near the full `u32` id space, the id set could become a fixed 512 MiB bitset.
 
 The engine is single-threaded. For many concurrent streams, Accounts can be sharded by Client, since every Record only ever touches its own Client's Account. The global Transaction id set is the one shared structure, and a sharded concurrent set keeps contention per bucket. One caveat: with threads, which of two Records with the same id is accepted depends on timing, so results could differ between runs unless ids are guaranteed unique upstream.
+
+## Correctness and safety
+
+### Type-system guarantees
+
+- **Distinct IDs:** `ClientId(u16)` and `TransactionId(u32)` are separate newtypes, so client and transaction identifiers cannot be swapped accidentally.
+- **Structural record split:** `Record` separates `Transaction` (always carries an `Amount`) from `DisputeAction` (has no `Amount` field), eliminating impossible combinations at compile time.
+- **Checked-only arithmetic:** `Amount(i64)` deliberately does not implement `+` or `-`; all balance math goes through `checked_add` and `checked_sub`.
+- **Single source of truth for Total:** `Account` stores only `available` and `held` and computes `total = available + held`. Every balance mutation checks `available + held` for overflow before
+committing, so `total` can never drift or overflow.
+- **Exhaustive lifecycle:** Deposit transitions (`Settled`, `Disputed`, `ChargedBack`) are enforced by a single exhaustive `match`.
+
+### Safety
+
+No `unsafe` code is used anywhere in the crate. Production paths contain no `unwrap()`; the only `expect()` is in `Account::total()`, which is protected by the commit-time overflow check in
+`Account::set_balances`.
+
+### Testing
+
+Run the full test suite with `cargo test`:
+
+- **Unit tests** (`src/amount.rs`, `src/engine.rs`): fixed-point parsing/formatting edge cases, checked overflow, and every deposit/withdrawal/dispute/resolve/chargeback state transition.
+- **Acceptance fixtures** (`tests/fixtures/`): 13 hand-derived CSV input/expected pairs covering the spec example, negative balances after chargeback, locked-account behavior, cross-client/withdrawal
+disputes, duplicate IDs, formatting, malformed rows, and amount edge cases.
+- **Pipeline & CLI tests** (`tests/pipeline.rs`, `tests/cli.rs`): exit codes, stdout/stderr separation, missing headers, and mid-stream I/O failures writing nothing to stdout.
+- **Volume & noise-invariance test** (`tests/large_stream.rs`): streams interleaved cohorts with closed-form expected balances and verifies injected noise has zero effect. Run the large 10,000-client /
+200-round case with:
+
+```sh
+    cargo test --release --test large_stream -- --ignored
+
+```
