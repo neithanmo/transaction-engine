@@ -1,0 +1,6 @@
+type, tx, client, amount
+Deposit, 1, 7, 10.0
+  DEPOSIT ,2,7, 5.0
+WithDrawal, 3, 7, 4.0
+Dispute, 1, 7
+RESOLVE , 1, 7
