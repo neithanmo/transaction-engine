@@ -1,0 +1,12 @@
+# Enforce GLOSSARY.md avoided domain terms mechanically via `clippy::disallowed_names`.
+# String literals (such as the CSV column header "tx") are unaffected.
+disallowed-names = [
+    "..",
+    "tx",
+    "wallet",
+    "customer",
+    "user",
+    "claim",
+    "reversal",
+    "frozen",
+]
