@@ -1,0 +1,1420 @@
+ ▐▛███▛█   Claude Code v2.1.332
+▝▜██████▀  Opus 5.5 · Claude Pro
+ ▝▝   ▝▝   ~/Documents/Projects/transaction-engine
+
+⚠ Your login expires in 2 days · run /login to renew
+
+❯ in this transaction engine, letss add some more fixture to test interesting   
+  corner cases that our current testing setup does not exercise:                
+     - decimal-shorthand-and-trailing-zeros.{input,expected}.csv — exercises    
+  .5, 5., and >4 trailing zeros                                                 
+     - dispute-ignores-populated-or-garbage-amount.{input,expected}.csv —       
+  exercises ignored 4th column on dispute/resolve                               
+     - multi-deposit-partial-chargeback-and-debt-recovery.{input,expected}.csv  
+  — exercises simultaneous disputes, partial resolve + chargeback, and debt     
+  paydown on a locked account                                                   
+  and probably check resolved is handled too?                                   
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● These three fixtures already exist (untracked). Let me check they pass and
+  match the documented rules before adding more.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● The three existing fixtures pass, and I re-derived each by hand and they're
+  correct. Next I'm checking which resolve paths the current fixtures already
+  cover.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Resolve-case tests are still missing for settled deposits, double resolves,
+  post-chargeback, withdrawals, unknown or foreign transactions, unknown
+  clients, locked accounts, and negative available funds. I'm checking how
+  negative numbers print next. · summary
+
+  Read 1 file (ctrl+o to expand)
+
+● Bash(cd /home/neithanmo/Documents/Projects/transaction-engine/tests/fixtures
+      && cat > resolve-rejected-outside-disputed-state.input.csv <<'EOF'
+      type,client,tx,amount…)
+  ⎿  running 1 test
+     test every_fixture_produces_its_expected_report ... ok
+     … +2 lines (ctrl+o to expand)
+  ⎿  Created
+     tests/fixtures/resolve-rejected-outside-disputed-state.input.csv +12
+       1 +type,client,tx,amount                                          
+       2 +deposit,1,1,40.0                                               
+       3 +resolve,1,1                                                    
+       4 +dispute,1,1                                                    
+       5 +dispute,1,1                                                    
+       6 +resolve,1,1                                                    
+       7 +resolve,1,1                                                    
+       8 +deposit,1,2,10.0                                               
+       9 +dispute,1,2                                                    
+      10 +chargeback,1,2                                                 
+      11 +resolve,1,2                                                    
+      12 +dispute,1,2                                                    
+  ⎿  Created
+     tests/fixtures/resolve-rejected-outside-disputed-state.expected.csv +2
+      1 +client,available,held,total,locked                              
+      2 +1,40.0,0.0,40.0,true                                            
+  ⎿  Created tests/fixtures/resolve-wrong-target-rejected.input.csv +9
+      1 +type,client,tx,amount                                           
+      2 +deposit,2,10,20.0                                               
+      3 +withdrawal,2,11,5.0                                             
+      4 +dispute,2,10                                                    
+      5 +resolve,2,11                                                    
+      6 +resolve,2,99                                                    
+      7 +resolve,3,10                                                    
+      8 +deposit,1,20,1.0                                                
+      9 +resolve,1,10                                                    
+  ⎿  Created tests/fixtures/resolve-wrong-target-rejected.expected.csv +3
+      1 +client,available,held,total,locked                              
+      2 +1,1.0,0.0,1.0,false                                             
+      3 +2,-5.0,20.0,15.0,false                                          
+  ⎿  Created
+     tests/fixtures/resolve-on-locked-account-and-from-negative.input.csv
+     +12
+       1 +type,client,tx,amount                                          
+       2 +deposit,1,1,100.0                                              
+       3 +withdrawal,1,2,80.0                                            
+       4 +dispute,1,1                                                    
+       5 +resolve,1,1                                                    
+       6 +deposit,1,3,30.0                                               
+       7 +deposit,1,4,10.0                                               
+       8 +dispute,1,3                                                    
+       9 +dispute,1,4                                                    
+      10 +chargeback,1,4                                                 
+      11 +resolve,1,3                                                    
+      12 +withdrawal,1,5,1.0                                             
+  ⎿  … +1 file changed
+     tests/fixtures/resolve-on-locked-account-and-from-negative.expected.cs
+     v
+
+● Now a quick check that the harness actually picks up the new files: I'll break
+  one expected file on purpose and confirm the test fails.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● The harness picks them up. Now I'll document the new fixtures in the fixtures
+  README table, and update the count in the main README.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● All of the untracked fixtures are correct too, so I'll document all nine.
+
+● Update(tests/fixtures/README.md)
+  ⎿  Couldn't edit file
+
+● Bash(sed -i 's/13 hand-derived CSV input\/expected pairs/22 hand-derived CSV
+      input\/expected pairs/' README.md && cat >> tests/fixtures/README.md
+      <<'EOF'
+      - `resolve-…)
+  ⎿  test result: ok. 53 passed; 0 failed; 0 ignored; 0 measured; 0 filtere
+     d out; finished in 0.00s
+     test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered
+     … +11 lines (ctrl+o to expand)
+  ⎿  Updated README.md +1 -1
+      104  Run the full test suite with `cargo test`:
+      105 
+      106  - **Unit tests** (`src/amount.rs`, `src/engine.rs`): fixed-poi
+           nt parsing/formatting edge cases, checked overflow, and every
+           deposit/withdrawal/dispute/resolve/chargeback state transition
+           .
+      107 -- **Acceptance fixtures** (`tests/fixtures/`): 13 hand-derived
+          - CSV input/expected pairs covering the spec example, negative 
+          -balances after chargeback, locked-account behavior, cross-clie
+          -nt/withdrawal                                                 
+      107 +- **Acceptance fixtures** (`tests/fixtures/`): 22 hand-derived
+          + CSV input/expected pairs covering the spec example, negative 
+          +balances after chargeback, locked-account behavior, cross-clie
+          +nt/withdrawal                                                 
+      108  disputes, duplicate IDs, formatting, malformed rows, and amoun
+           t edge cases.
+      109  - **Pipeline & CLI tests** (`tests/pipeline.rs`, `tests/cli.rs
+           `): exit codes, stdout/stderr separation, missing headers, and
+            mid-stream I/O failures writing nothing to stdout.
+      110  - **Volume & noise-invariance test** (`tests/large_stream.rs`)
+           : streams interleaved cohorts with closed-form expected balanc
+           es and verifies injected noise has zero effect. Run the large
+           10,000-client /
+  ⎿  Updated tests/fixtures/README.md +8
+      48    Client 3 never appears because its Deposit reused id `3`.
+      49  - `amount-edge-cases`: Client 1 is `1.2345 + 2.5`; the two 900-
+          trillion Deposits for
+      50    Client 2 overflow on the second, so only the first (`90000000
+          0000000.0`) stands.
+      51 +- `resolve-rejected-outside-disputed-state`: every Rejected Res
+         +olve would, if applied, move                                   
+      52 +  money out of an empty Held (or re-credit a charged-back 10), 
+         +so the final `40.0` / `0.0`                                    
+      53 +  only holds if all of them are skipped.                       
+      54 +- `resolve-wrong-target-rejected`: Client 2 is `20 − 5 = 15`, w
+         +ith the Deposit still Disputed                                 
+      55 +  (`-5.0` Available, `20.0` Held); Client 3 never appears.     
+      56 +- `resolve-on-locked-account-and-from-negative`: `100 − 80 = 20
+         +`, Dispute → `−80/100`, Resolve → `20/0`;                      
+      57 +  Deposits 30 and 10 → `60`; both Disputed → `20/40`; Chargebac
+         +k of 10 → `20/30`, Locked;                                     
+      58 +  Resolve of 30 → `50/0`; the final Withdrawal is Rejected.    
+
+● The table edit missed because that row ends with the Rule column. Retrying
+  with the full row ending:
+
+● Update(tests/fixtures/README.md)
+  ⎿  Added 9 lines
+      37  | `input-formatting` | Whitespace around fields, reordered colu
+          mns, and Dispute rows with no trailing amount column are all ac
+          cepted. | README *Input and errors* (US 9–12) |
+      38  | `malformed-rows` | Unknown type, an unparsable amount, a Reco
+          rd missing fields, and invalid UTF-8 are skipped as Malformed a
+          nd never create an Account, while valid Records around them sti
+          ll apply. The input file contains a raw invalid byte. | README
+          *Input and errors* → Malformed (US 13, 14) |
+      39  | `amount-edge-cases` | Four decimals and trailing zeros beyond
+           four are accepted exactly; five significant decimals, zero, ne
+          gative and missing amounts are Malformed; a Deposit that would
+          overflow is Rejected. | README *Amounts* (US 15–20) |
+      40 +| `decimal-shorthand-and-trailing-zeros` | `.5`, `5.` and more 
+         +than four trailing zeros (`1.2345000`) parse exactly; sums to `
+         +6.0`. | README *Amounts* |                                     
+      41 +| `dispute-ignores-populated-or-garbage-amount` | A populated o
+         +r unparsable 4th column on a Dispute or Resolve is ignored; the
+         + full Deposit amount is Held. | README *Input and errors* |    
+      42 +| `multi-deposit-partial-chargeback-and-debt-recovery` | Two si
+         +multaneous Disputes; one Resolved, one Charged back; a later De
+         +posit pays the debt down on the Locked Account while a Withdraw
+         +al is still Rejected. | README *Balances can go negative*, *Loc
+         +ked Accounts* |                                                
+      43 +| `active-held-funds-at-eof` | A Dispute still open at end of i
+         +nput is reported as Held. | README *Deposit lifecycle* |       
+      44 +| `header-only-zero-accounts` | A header-only file prints only 
+         +the output header. | README *Input and errors* |               
+      45 +| `u16-u32-zero-and-max-boundaries` | Client and tx ids at `0` 
+         +and at `u16`/`u32` max are accepted. | README *Input and errors
+         +* |                                                            
+      46 +| `resolve-rejected-outside-disputed-state` | Resolve of a Sett
+         +led Deposit, a second Resolve, and a Resolve or Dispute after C
+         +hargeback are all Rejected; so is a Dispute of an already-Dispu
+         +ted Deposit. | README *Deposit lifecycle* |                    
+      47 +| `resolve-wrong-target-rejected` | Resolve targeting a Withdra
+         +wal, an unknown tx, another Client's Deposit, or from an unknow
+         +n Client is Rejected and creates no Account. | README *A Disput
+         +e action must come from the Deposit's owner*; ADR 0001 |       
+      48 +| `resolve-on-locked-account-and-from-negative` | Resolve resto
+         +res a negative Available; a Resolve on a Locked Account still r
+         +eleases Held funds. | README *Locked Accounts* |               
+      49 
+      50  ### Notes on hand-derived values
+      51 
+
+● I added three fixtures for resolve corner cases. The three you listed were
+  already in tests/fixtures/ as untracked files, alongside three others. I
+  worked each one out by hand and they're all correct. cargo test passes, and I
+  confirmed the harness picks up the new files by breaking one expected value
+  and watching the test fail.
+
+  The three you listed (existing, checked):
+  - decimal-shorthand-and-trailing-zeros: .5 + 5. + 0.0001 + 1.2345000 − 0.7346 
+    = 6.0.
+  - dispute-ignores-populated-or-garbage-amount: the full 50 and 30 are held,
+    whatever is in the 4th column.
+  - multi-deposit-partial-chargeback-and-debt-recovery: ends at 5.0, locked,
+    which matches.
+
+  New resolve fixtures. Before this, the fixtures only tested resolve when it
+  succeeds (dispute → resolve, then dispute again or chargeback).
+  - resolve-rejected-outside-disputed-state: resolve on a deposit that was never
+    disputed, a second resolve in a row, and resolve or dispute after a
+    chargeback are all rejected. So is disputing a deposit that's already under
+    dispute. If any of these were wrongly applied, held would go negative or the
+    charged-back 10 would come back, so the final 40.0 / 0.0 only holds if
+    every one is skipped.
+  - resolve-wrong-target-rejected: resolve aimed at a withdrawal, an unknown tx,
+    or another client's disputed deposit is rejected. A resolve from a client
+    with no account doesn't create one. Client 2's deposit stays disputed at
+    -5.0 / 20.0.
+  - resolve-on-locked-account-and-from-negative: a resolve brings available back
+    from -80 to 20. After a chargeback locks the account, resolving a second
+    open dispute still releases its held funds, ending at 50.0 / 0.0, locked.
+
+  Docs: I added all nine untracked fixtures to the table in
+  tests/fixtures/README.md, with working notes for the three new ones. I also
+  changed the fixture count in the main README.md from 13 to 22.
+
+  The fixture that ignores a populated or garbage amount on dispute/resolve rows
+  tests behaviour the README never states. It only says those rows may leave
+  the amount column out. If ignoring the amount is the intended rule, it's worth
+  adding a line to Input and errors.
+
+  Nothing is committed yet.
+
+✻ Crunched for 1m 20s · done 1:14 PM
+
+※ recap: You wanted more fixtures for untested corner cases; your three were correct, and I added three resolve fixtures plus docs, all passing and uncommitted. Next, decide whether the README should say dispute and resolve ignore the amount column, then commit. (turn off recaps in /config)
+
+❯ add the ignored-amount rule to the README and commit.                         
+  this would make even clear our assumption. not that strict while preserving   
+  the spec behavior that it describes.                                          
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● The README's Amounts section already covers dispute amounts, but not
+  unparsable ones, which the fixture tests treat as Malformed. I'm checking that
+  the parser handles chargebacks the same way. · summary
+
+  Searched for 1 pattern, ran 1 shell command (ctrl+o to expand)
+
+● Confirmed: on dispute, resolve and chargeback rows the amount field is never
+  read. I'll spell the rule out in Input and errors and have the Amounts line
+  point to it.
+
+● Bash(python3 - <<'EOF'
+      p='README.md'; s=open(p).read()…)
+  ⎿  diff --git a/README.md b/README.md
+     index cdf0358..7be526d 100644
+     --- a/README.md
+     … +52 lines (ctrl+o to expand)
+  ⎿  Updated README.md +3 -3
+      59 
+      60  A Record that would overflow Available, Held or Total is Reject
+          ed.
+      61 
+      62 -An amount on a Dispute action is ignored.                      
+      62 +An amount on a Dispute action is ignored (see [Input and errors
+         +](#input-and-errors)).                                         
+      63 
+      64  ## Input and errors
+      65 
+      66 -Whitespace around fields and headers is trimmed, columns are ma
+         -tched by header name, and Dispute actions may omit the trailing
+         - amount column. Header names and `type` values are case-sensiti
+         -ve. Headers must include lowercase `type`, `client`, `tx` and `
+         -amount`; type values must be lowercase `deposit`, `withdrawal`,
+         - `dispute`, `resolve` or `chargeback`.                         
+      66 +Whitespace around fields and headers is trimmed, columns are ma
+         +tched by header name, and Dispute actions may omit the trailing
+         + amount column. When a Dispute, Resolve or Chargeback does carr
+         +y an amount, it is ignored and never parsed: a Dispute action a
+         +lways refers to the full amount of the Deposit it targets, so `
+         +dispute,1,1,5.0` holds the whole Deposit and `resolve,1,1,not_a
+         +_number` is a valid Resolve, not a Malformed Record. This is lo
+         +oser than requiring the column to be empty, but it keeps the sp
+         +ec's behaviour, where the amount comes from the original Deposi
+         +t, and avoids discarding a genuine payment-partner action over 
+         +a field the engine never uses. Header names and `type` values a
+         +re case-sensitive. Headers must include lowercase `type`, `clie
+         +nt`, `tx` and `amount`; type values must be lowercase `deposit`
+         +, `withdrawal`, `dispute`, `resolve` or `chargeback`.          
+      67 
+      68  | Outcome | Examples | Effect |
+      69  | --- | --- | --- |
+      70  | **Fatal** | wrong arguments, unreadable or empty file, missin
+          g or incorrectly cased header columns, I/O error mid-stream | e
+          xit non-zero, nothing on stdout |
+      71 -| **Malformed** | unknown or incorrectly cased type value, unpa
+         -rsable number, missing field, invalid UTF-8 | Record skipped, w
+         -arning on stderr (the first 100, then one line counting the res
+         -t) |                                                           
+      71 +| **Malformed** | unknown or incorrectly cased type value, unpa
+         +rsable number (other than a Dispute action's ignored amount), m
+         +issing field, invalid UTF-8 | Record skipped, warning on stderr
+         + (the first 100, then one line counting the rest) |            
+      72  | **Rejected** | insufficient funds, duplicate id, no such Depo
+          sit, wrong lifecycle state, Withdrawal from a Locked Account, o
+          verflow | Record skipped |
+      73 
+      74  An empty file is Fatal because it has no header. A file contain
+          ing only a valid header succeeds with zero Accounts and writes
+          only the output header.
+
+● Now the commit. I'm staging only the fixtures and the two READMEs, and leaving
+  .claude/, ASSUMPTIONS.md and artifacts/ out. Since we're on main, I'll commit
+  on a new branch.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● I've added the ignored-amount rule to the README and committed everything as
+  4ad0000 on a new branch, test/resolve-and-input-fixtures. I branched instead
+  of committing to main because my rules for this setup say to branch before
+  committing on the default branch. If you'd rather keep it on main, run git 
+  switch main && git merge --ff-only test/resolve-and-input-fixtures. The full
+  test suite passes.
+
+  README changes:
+  - Input and errors now says that an amount on a dispute, resolve or chargeback
+    row is ignored and never parsed. The action always applies to the full
+    amount of the original deposit. So dispute,1,1,5.0 holds the whole deposit,
+    and resolve,1,1,not_a_number is a valid resolve, not a malformed row. It
+    also gives your reason: this is looser than requiring the column to be
+    empty, but it keeps the behaviour the spec describes and doesn't throw away
+    a real payment-partner action over a field the engine never reads.
+  - Amounts already had the line "An amount on a Dispute action is ignored." I
+    left it and added a link to the new section.
+  - The Malformed row in the error table now excludes this ignored amount from
+    "unparsable number".
+
+  I checked the code before writing this. In src/csv_adapter.rs, the amount
+  field is only read for deposits and withdrawals, so the README now describes
+  what the engine actually does.
+
+  What's in the commit: both README files plus all 18 fixture CSVs, which are
+  the 9 pairs. I left .claude/, ASSUMPTIONS.md and artifacts/ uncommitted
+  because they weren't part of this change.
+
+✻ Cooked for 31s · done 1:37 PM
+
+❯ /export                                                                       
+  ⎿  Export cancelled
+※ recap: We added corner-case test fixtures, including resolve cases, and wrote the ignored dispute-amount rule into the README. Everything is committed and passing on branch test/resolve-and-input-fixtures. Next, decide whether to merge it into main or open a pull request. (turn off recaps in /config)
+
+❯ /export                                                                       
+  ⎿  Conversation exported to /home/neithanmo/Documents/Projects/transaction-eng
+     ine/2026-11-25-135859-in-this-transaction-engine-letss-add-some-more-f.txt
+
+❯ thinking that adding fuzzing would be good to ensure engine does not crashes. 
+  notice the implementation splits between library and binary.                  
+  that was a design decision, and we can take advantage of that. for example we 
+  can call @src/engine.rs apply function that takes in a Record.                
+  maybe we can use cargo-fuzz, and we have plenty of fixtures in                
+  @tests/fixtures/ that the fuzzer can use as corpus(at least to speed up the   
+  seed generation part)                                                         
+  not part of the spec but would make me feel safe regarding potential crashes. 
+  this usually requires a fuzz/ folder we call engine our entry point, omitting 
+  the io part.                                                                  
+  what is your take?                                                            
+  ⎿  Read src/engine.rs (807 lines)
+  ⎿  Listed directory tests/fixtures/
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Fuzzing is worth adding here, and the library/binary split makes it cheap.
+  Your two main ideas need adjusting, though. I'd build two fuzz targets, not
+  one.
+
+  1. Fuzzing Engine::apply with raw Records will report a crash that can't 
+  happen in production.
+  Amount::from_units is public, so a fuzzer that builds Records directly will
+  produce deposits of 0 or -5. Those hit the debug_assert!(amount > 
+  Amount::ZERO) in Engine::apply (src/engine.rs:214). cargo-fuzz turns debug
+  assertions on by default, so this shows up as a panic within seconds. In
+  production it can't happen, because csv_adapter rejects non-positive amounts
+  as Malformed before the engine sees them. So the engine relies on its caller
+  for that guarantee.
+
+  You can either:
+  - have the fuzz target generate only positive amounts (simple, and matches the
+    current design), or
+  - make the type enforce it: a Transaction constructor that rejects amounts ≤
+    0, so no caller can build a bad Record.
+
+  I'd do the first now and note the second as a design option. A deposit-only
+  amount type would be the cleaner long-term fix.
+
+  2. The CSV fixtures won't help an engine-level target.
+  A target that takes Records reads its input as structured bytes (via
+  arbitrary), not CSV text. Seeding it with your fixtures gives the fuzzer
+  noise, not useful starting points. The fixtures fit a second target that feeds
+  bytes through pipeline::run(&data[..], io::sink()). It still skips file I/O,
+  because run accepts any Read/Write. That is also where most of the crash risk
+  is: untrusted text going through the csv crate, header matching, amount
+  parsing and the warning path. The amount parser deserves its own small target
+  too, since "1.", ".5", very long digit strings and overflow are classic panic
+  sources.
+
+  3. Check invariants, not just "it didn't crash".
+  A run that only checks for panics proves little here. Production code has a
+  single expect, and the set_balances check already guards it. The engine target
+  becomes useful if, after each apply, it asserts:
+  - total == available + held and held >= 0;
+  - a Rejected record leaves every account unchanged;
+  - a locked account never unlocks;
+  - a dispute action never creates an account.
+
+  With these checks, a run with no failures shows the README's rules hold for
+  any input sequence, beyond the cases the fixtures pick out.
+
+  Proposed layout:
+  - fuzz/fuzz_targets/engine.rs: a structured list of operations with small id
+    ranges (e.g. client % 4, tx % 16). Without small ranges, the fuzzer almost
+    never makes a dispute that hits a real deposit. Amounts are limited to
+    positive values, and the invariants above are checked after every step.
+  - fuzz/fuzz_targets/csv_pipeline.rs: raw bytes into run. Its corpus is seeded
+    from tests/fixtures/*.input.csv, and its dictionary holds deposit, dispute,
+    resolve, chargeback, type,client,tx,amount, . and ,.
+  - fuzz/fuzz_targets/amount_parse.rs: str::parse::<Amount> round-tripped
+    through Display.
+
+  You already have nightly and cargo-fuzz 0.13.2 installed, so nothing else
+  needs setting up. arbitrary would be a dependency of the fuzz crate only; the
+  main crate doesn't change. The fuzz/ crate stays out of cargo test and stable
+  builds. I'd also add a short README section on how to run it.
+
+  Want me to build it that way, with the positive-amount restriction for now?
+
+✻ Baked for 29s · done 2:14 PM
+
+❯ yes i notice the issue, lets do first an impl for Transaction::new ->         
+  Result<Selft, NonPositiveAmount> error type.                                  
+  and use that. in @csv_adapter(removing the need for that check if amount <    
+  amount::ZERO) and the debug assert too.                                       
+  once that is done, we can continue with fuzzing                               
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● I'm making Transaction's fields private so only Transaction::new can build
+  one, with getters added; I'm checking what else reads those fields next. 
+  · summary
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+● Now the edits. First record.rs: the constructor, getters and the new error
+  type.
+
+● Bash(python3 - <<'EOF'
+      import re…)
+  ⎿  5://! *Input and errors* and *Assumptions → Amounts*.
+     12:use crate::amount::{Amount, AmountParseError};
+     15:    ClientId, DisputeAction, DisputeKind, NonPositiveAmount, Record
+     … +13 lines (ctrl+o to expand)
+  ⎿  Updated src/record.rs +60 -7
+       4  //! carries an [`Amount`]) or a [`DisputeAction`] (a Dispute, R
+          esolve or
+       5  //! Chargeback, which carries no amount and targets a Deposit b
+          y its
+       6  //! [`TransactionId`]). The split is structural: a `Transaction
+          ` cannot be
+       7 -//! built without an amount, and a `DisputeAction` has no amoun
+         -t field to set.                                                
+       7 +//! built without a positive amount, and a `DisputeAction` has 
+         +no amount field to set.                                        
+       8 
+       9 +use std::fmt;                                                  
+      10 +                                                               
+      11  use crate::amount::Amount;
+      12 
+      13  /// The owner of exactly one Account, identified only by a numb
+          er.
+     ...
+       55      }
+       56  }
+       57 
+       56 -/// A Deposit or Withdrawal: owns a [`TransactionId`] and carr
+          -ies an [`Amount`].                                            
+       58 +/// A Deposit or Withdrawal: owns a [`TransactionId`] and carr
+          +ies a positive [`Amount`].                                    
+       59 +///                                                           
+       60 +/// The fields are private so [`Transaction::new`] is the only
+          + way to build one:                                            
+       61 +/// every `Transaction` in existence has an amount greater tha
+          +n zero.                                                       
+       62  #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+       63  pub struct Transaction {
+       64 +    client: ClientId,                                         
+       65 +    transaction_id: TransactionId,                            
+       66 +    kind: TransactionKind,                                    
+       67 +    amount: Amount,                                           
+       68 +}                                                             
+       69 +                                                              
+       70 +/// A Deposit or Withdrawal was given a zero or negative amoun
+          +t.                                                            
+       71 +#[derive(Debug, Clone, Copy, PartialEq, Eq)]                  
+       72 +pub struct NonPositiveAmount(pub Amount);                     
+       73 +                                                              
+       74 +impl fmt::Display for NonPositiveAmount {                     
+       75 +    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+       76 +        write!(f, "amount {} is not positive", self.0)        
+       77 +    }                                                         
+       78 +}                                                             
+       79 +                                                              
+       80 +impl std::error::Error for NonPositiveAmount {}               
+       81 +                                                              
+       82 +impl Transaction {                                            
+     … +45 lines (ctrl+o to expand)
+  ⎿  Updated src/csv_adapter.rs +7 -12
+      12  use crate::amount::{Amount, AmountParseError};
+      13  use crate::engine::Account;
+      14  use crate::record::{
+      15 -    ClientId, DisputeAction, DisputeKind, Record, Transaction, 
+         -TransactionId, TransactionKind,                                
+      15 +    ClientId, DisputeAction, DisputeKind, NonPositiveAmount, Re
+         +cord, Transaction, TransactionId,                              
+      16 +    TransactionKind,                                           
+      17  };
+      18 
+      19  /// A fatal input problem: the stream cannot be read as Records
+           at all.
+     ...
+      58      /// The `amount` field is not a valid Amount.
+      59      InvalidAmount(AmountParseError),
+      60      /// A Deposit or Withdrawal amount is zero or negative.
+      60 -    NonPositiveAmount(Amount),                                 
+      61 +    NonPositiveAmount(NonPositiveAmount),                      
+      62      /// The line is not valid UTF-8.
+      63      InvalidUtf8,
+      64  }
+     ...
+      71              Malformed::InvalidClient(v) => write!(f, "invalid c
+          lient `{v}`"),
+      72              Malformed::InvalidTransactionId(v) => write!(f, "in
+          valid transaction id `{v}`"),
+      73              Malformed::InvalidAmount(e) => write!(f, "invalid a
+          mount: {e}"),
+      73 -            Malformed::NonPositiveAmount(a) => write!(f, "amoun
+         -t {a} is not positive"),                                       
+      74 +            Malformed::NonPositiveAmount(e) => e.fmt(f),       
+      75              Malformed::InvalidUtf8 => f.write_str("line is not 
+          valid UTF-8"),
+      76          }
+      77      }
+     ...
+      133              let amount: Amount = field(self.amount, AMOUNT)?
+      134                  .parse()
+      135                  .map_err(Malformed::InvalidAmount)?;
+      135 -            if amount <= Amount::ZERO {                       
+      136 -                return Err(Malformed::NonPositiveAmount(amount
+          -));                                                           
+      137 -            }                                                 
+      138 -            Ok(Record::Transaction(Transaction {              
+      139 -                client,                                       
+      140 -                transaction_id,                               
+      141 -                kind,                                         
+      142 -                amount,                                       
+      143 -            }))                                               
+      136 +            Transaction::new(client, transaction_id, kind, amo
+          +unt)                                                          
+      137 +                .map(Record::Transaction)                     
+      138 +                .map_err(Malformed::NonPositiveAmount)        
+     … +3 lines (ctrl+o to expand)
+  ⎿  Updated src/engine.rs +23 -21
+      211      pub fn apply(&mut self, record: Record) -> Result<(), Reje
+           ction> {
+      212          match record {
+      213              Record::Transaction(transaction) => {
+      214 -                debug_assert!(                                
+      215 -                    transaction.amount > Amount::ZERO,        
+      216 -                    "well-formed transactions carry a positive
+          - amount"                                                      
+      217 -                );                                            
+      218 -                if !self.seen_transaction_ids.insert(transacti
+          -on.transaction_id) {                                          
+      214 +                if !self.seen_transaction_ids.insert(transacti
+          +on.transaction_id()) {                                        
+      215                      return Err(Rejection::DuplicateTransaction
+           Id);
+      216                  }
+      221 -                let account = self.accounts.entry(transaction.
+          -client).or_default();                                         
+      222 -                match transaction.kind {                      
+      217 +                let account = self.accounts.entry(transaction.
+          +client()).or_default();                                       
+      218 +                match transaction.kind() {                    
+      219                      TransactionKind::Deposit => {
+      224 -                        account.apply_deposit(transaction.tran
+          -saction_id, transaction.amount)                               
+      220 +                        account.apply_deposit(transaction.tran
+          +saction_id(), transaction.amount())                           
+      221                      }
+      226 -                    TransactionKind::Withdrawal => account.app
+          -ly_withdrawal(transaction.amount),                            
+      222 +                    TransactionKind::Withdrawal => account.app
+          +ly_withdrawal(transaction.amount()),                          
+      223                  }
+      224              }
+      225              Record::DisputeAction(DisputeAction {
+     ...
+      252      }
+      253 
+      254      fn deposit(client: u16, transaction_id: u32, amt: &str) ->
+            Record {
+      259 -        Record::Transaction(Transaction {                     
+      260 -            client: ClientId::new(client),                    
+      261 -            transaction_id: TransactionId::new(transaction_id)
+          -,                                                             
+      262 -            kind: TransactionKind::Deposit,                   
+      263 -            amount: amount(amt),                              
+      264 -        })                                                    
+      255 +        Record::Transaction(                                  
+      256 +            Transaction::new(                                 
+      257 +                ClientId::new(client),                        
+      258 +                TransactionId::new(transaction_id),           
+      259 +                TransactionKind::Deposit,                     
+      260 +                amount(amt),                                  
+      261 +            )                                                 
+     … +23 lines (ctrl+o to expand)
+
+● Next, re-export NonPositiveAmount from the crate root, then run formatting,
+  clippy and the tests.
+
+● Bash(sed -i 's/^    ClientId, DisputeAction, DisputeKind, Record, Transaction,
+      TransactionId, TransactionKind,$/    ClientId, DisputeAction,
+      DisputeKind, NonPositive…)
+  ⎿  test result: ok. 53 passed; 0 failed; 0 ignored; 0 measured; 0 filtere
+     d out; finished in 0.00s
+     test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered
+     … +15 lines (ctrl+o to expand)
+  ⎿  Updated src/engine.rs +4 -1
+      211      pub fn apply(&mut self, record: Record) -> Result<(), Reje
+           ction> {
+      212          match record {
+      213              Record::Transaction(transaction) => {
+      214 -                if !self.seen_transaction_ids.insert(transacti
+          -on.transaction_id()) {                                        
+      214 +                if !self                                      
+      215 +                    .seen_transaction_ids                     
+      216 +                    .insert(transaction.transaction_id())     
+      217 +                {                                             
+      218                      return Err(Rejection::DuplicateTransaction
+           Id);
+      219                  }
+      220                  let account = self.accounts.entry(transaction.
+           client()).or_default();
+  ⎿  Updated src/lib.rs +2 -1
+      18  pub use engine::{Account, Engine, Rejection};
+      19  pub use pipeline::{FatalError, run};
+      20  pub use record::{
+      21 -    ClientId, DisputeAction, DisputeKind, Record, Transaction, 
+         -TransactionId, TransactionKind,                                
+      21 +    ClientId, DisputeAction, DisputeKind, NonPositiveAmount, Re
+         +cord, Transaction, TransactionId,                              
+      22 +    TransactionKind,                                           
+      23  };
+
+● Clippy is clean and all tests pass. Adding unit tests for the constructor
+  itself:
+
+● Bash(cat >> src/record.rs <<'EOF'…)
+  ⎿  0
+     test result: ok. 55 passed; 0 failed; 0 ignored; 0 measured; 0 filtere
+     d out; finished in 0.00s
+     … +50 lines (ctrl+o to expand)
+  ⎿  Updated src/record.rs +33
+      159      /// A Dispute, Resolve or Chargeback.
+      160      DisputeAction(DisputeAction),
+      161  }
+      162 +                                                              
+      163 +#[cfg(test)]                                                  
+      164 +mod tests {                                                   
+      165 +    use super::*;                                             
+      166 +                                                              
+      167 +    fn build(units: i64) -> Result<Transaction, NonPositiveAmo
+          +unt> {                                                        
+      168 +        Transaction::new(                                     
+      169 +            ClientId::new(1),                                 
+      170 +            TransactionId::new(1),                            
+      171 +            TransactionKind::Deposit,                         
+      172 +            Amount::from_units(units),                        
+      173 +        )                                                     
+      174 +    }                                                         
+      175 +                                                              
+      176 +    #[test]                                                   
+      177 +    fn positive_amount_builds_a_transaction() {               
+      178 +        let transaction = build(1).expect("smallest positive a
+          +mount is accepted");                                          
+      179 +        assert_eq!(transaction.amount(), Amount::from_units(1)
+          +);                                                            
+      180 +        assert_eq!(transaction.client(), ClientId::new(1));   
+      181 +        assert_eq!(transaction.transaction_id(), TransactionId
+          +::new(1));                                                    
+      182 +        assert_eq!(transaction.kind(), TransactionKind::Deposi
+          +t);                                                           
+      183 +    }                                                         
+      184 +                                                              
+      185 +    #[test]                                                   
+      186 +    fn zero_and_negative_amounts_are_rejected() {             
+      187 +        for units in [0, -1, i64::MIN] {                      
+      188 +            assert_eq!(                                       
+      189 +                build(units),                                 
+      190 +                Err(NonPositiveAmount(Amount::from_units(units
+          +)))                                                           
+      191 +            );                                                
+      192 +        }                                                     
+      193 +    }                                                         
+      194 +}                                                             
+
+● Transaction::new is in, and the debug_assert! and the adapter's own amount
+  check are both gone. The only check left is in the constructor. Tests (55 unit
+  plus all integration) and clippy both pass. I haven't committed.
+
+  What changed:
+  - src/record.rs: Transaction::new(client, tx, kind, amount) -> Result<Self, 
+    NonPositiveAmount> returns an error for any amount ≤ 0.
+    NonPositiveAmount(pub Amount) is a small error type that implements Display
+    and Error. I also added two unit tests: the smallest positive amount is
+    accepted, and 0, -1 and i64::MIN are rejected.
+  - Private fields: Transaction's fields are now private with getters (client(),
+    transaction_id(), kind(), amount()). Without that, a struct literal could
+    still skip the check and the invariant would be optional. This changes the
+    library's public API, though nothing outside src/ built a Transaction
+    directly.
+  - src/csv_adapter.rs: the transaction branch now calls Transaction::new(...)
+    and maps any error to Malformed::NonPositiveAmount. That variant now wraps
+    the new error type. The warning text is the same as before ("amount 0.0 is
+    not positive").
+  - src/engine.rs: apply uses the getters, and the test helpers call
+    Transaction::new(...).expect(...).
+  - src/lib.rs: re-exports NonPositiveAmount.
+
+  For the fuzzing step, the engine target can now build each operation with
+  Transaction::new and skip the ones it rejects. That way it never creates a
+  state the parser couldn't produce, and doesn't need its own positive-amount
+  filter.
+
+  Should I commit this on the current branch before starting on fuzz/?
+
+✻ Cogitated for 51s · done 2:32 PM
+
+❯ yes commit it, then continue with fuzzing                                     
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Committed as bcbc111. The log shows PR #10 was merged in the meantime, so I'm
+  checking which branch that commit landed on:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● The commit landed directly on main because I didn't check the branch after
+  you'd switched back from PR #10, and there's also an untracked fuzz/ directory
+  I didn't create. I'm going to look into both before changing anything. 
+  · summary
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● main is one unpushed commit ahead of origin/main, so I'll move that commit to
+  a feature branch and reset local main. The leftover fuzz/ contents are stale,
+  with no Cargo.toml or target source, so I'll leave them alone and keep them
+  out of git. · summary
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● There's already a local feat/fuzzing branch with one commit, which has
+  cargo-fuzz targets and a fuzz harness. My failed branch command means main
+  still holds my commit, so nothing has moved yet; I'm checking how that branch
+  builds Transactions, since my refactor affects it. · summary
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● The fuzzing branch only adds fuzz/ and is built on the same commit as my
+  refactor, so I'll cherry-pick the refactor onto it and fix the one struct
+  literal it breaks. · summary
+
+● Bash(git switch -q feat/fuzzing && git cherry-pick bcbc111 >/dev/null && git
+      branch -f main origin/main && git log --oneline -3 && git log --oneline -1
+      main && git s…)
+  ⎿  branch 'main' set up to track 'origin/main'.
+     3356e1a refactor: enforce positive amounts in Transaction::new
+     9df9d85 test: add cargo-fuzz targets for engine, CSV pipeline and amou
+     … +125 lines (ctrl+o to expand)
+  ⎿  Created fuzz/.gitignore +5
+  ⎿  Created fuzz/Cargo.lock +207
+  ⎿  Created fuzz/Cargo.toml +44
+  ⎿  Created fuzz/csv.dict +27
+  ⎿  Created fuzz/run.sh +50
+  ⎿  … +100 files changed
+     fuzz/fuzz_targets/csv_pipeline.rs
+     fuzz/fuzz_targets/engine_model.rs
+     fuzz/fuzz_targets/amount_parse.rs
+     +97 more
+  ⎿  (a git step in this command can move the working tree, so these may be
+     its changes, not edits) (ctrl+o to expand)
+
+● Two spots need changing: the model's struct pattern, and wherever the targets
+  build Transactions.
+
+  Searched for 1 pattern, ran 1 shell command (ctrl+o to expand)
+
+● I'm switching the model match to getters, building engine records through
+  Transaction::new, and dropping the amount clamp so zero and negative values
+  reach the constructor. · summary
+● Bash(python3 - <<'EOF'
+      def sub(path, old, new):…)
+  ⎿  43:enum Amt {
+     112:        Amt::Units(u) => u as i64,
+     113:        Amt::Whole(w) => w as i64 * 10_000,
+     … +44 lines (ctrl+o to expand)
+  ⎿  Updated fuzz/fuzz_targets/engine_model.rs +18 -11
+      105      }
+      106  }
+      107 
+      108 -/// Always positive: the CSV adapter guarantees it and the Eng
+          -ine debug-asserts it.                                         
+      108 +/// Any amount, including zero and negative: `Transaction::new
+          +` must reject                                                 
+      109 +/// exactly the non-positive ones, which the target then skips
+          +.                                                             
+      110  fn amount(a: &Amt) -> Amount {
+      111      let units = match *a {
+      112          Amt::Units(u) => u as i64,
+      113          Amt::Whole(w) => w as i64 * 10_000,
+      114          Amt::NearMax(d) => i64::MAX - d as i64,
+      115          Amt::Fraction(d) => i64::MAX / (d as i64 % 8 + 1),
+      115 -        Amt::Raw(r) => r.checked_abs().unwrap_or(i64::MAX),   
+      116 +        Amt::Raw(r) => r,                                     
+      117      };
+      117 -    Amount::from_units(units.max(1))                          
+      118 +    Amount::from_units(units)                                 
+      119  }
+      120 
+      121  fuzz_target!(|data: &[u8]| {
+     ...
+      132      for op in ops.take(4096) {
+      133          let Ok(op) = op else { break };
+      134          let record = match &op {
+      134 -            Op::Deposit(c, t, a) | Op::Withdrawal(c, t, a) => 
+          -Record::Transaction(Transaction {                             
+      135 -                client: g.client(c),                          
+      136 -                transaction_id: g.tx(t),                      
+      137 -                kind: if matches!(op, Op::Deposit(..)) {      
+      135 +            Op::Deposit(c, t, a) | Op::Withdrawal(c, t, a) => 
+          +{                                                             
+      136 +                let kind = if matches!(op, Op::Deposit(..)) { 
+      137                      TransactionKind::Deposit
+      138                  } else {
+      139                      TransactionKind::Withdrawal
+      141 -                },                                            
+      142 -                amount: amount(a),                            
+      143 -            }),                                               
+      140 +                };                                            
+      141 +                let amount = amount(a);                       
+      142 +                match Transaction::new(g.client(c), g.tx(t), k
+          +ind, amount) {                                                
+      143 +                    Ok(transaction) => Record::Transaction(tra
+          +nsaction),                                                    
+      144 +                    Err(rejected) => {                        
+     … +17 lines (ctrl+o to expand)
+  ⎿  Updated fuzz/src/lib.rs +7 -6
+      51  impl Model {
+      52      pub fn apply(&mut self, record: &Record) -> Result<(), Reje
+          ction> {
+      53          match *record {
+      54 -            Record::Transaction(Transaction {                  
+      55 -                client,                                        
+      56 -                transaction_id,                                
+      57 -                kind,                                          
+      58 -                amount,                                        
+      59 -            }) => {                                            
+      54 +            Record::Transaction(transaction) => {              
+      55 +                let (client, transaction_id, kind, amount) = ( 
+      56 +                    transaction.client(),                      
+      57 +                    transaction.transaction_id(),              
+      58 +                    transaction.kind(),                        
+      59 +                    transaction.amount(),                      
+      60 +                );                                             
+      61                  let id = transaction_id.get();
+      62                  if self.seen.contains(&id) {
+      63                      return Err(Rejection::DuplicateTransactionI
+          d);
+
+● Now building all three targets and giving each a short run:
+
+● Bash(sed -n 40,50p fuzz/fuzz_targets/engine_model.rs; cat fuzz/.gitignore; cat
+      fuzz/run.sh | head -50; cargo +nightly fuzz build 2>&1 | grep -E
+      "^(warning|error)|Fin…)
+  ⎿  }
+
+     #[derive(Debug, Arbitrary)]
+     … +66 lines (ctrl+o to expand)
+  ⎿  4 files changed (binary, mode only or too large to show)
+     fuzz/target/x86_64-unknown-linux-gnu/release/build/transaction-engine/
+     331479a7ed4a25a6/out/libtransaction_engine-331479a7ed4a25a6.rlib
+     fuzz/target/x86_64-unknown-linux-gnu/release/build/transaction-engine/
+     331479a7ed4a25a6/out/libtransaction_engine-331479a7ed4a25a6.rmeta
+     fuzz/target/x86_64-unknown-linux-gnu/release/build/transaction-engine-
+     fuzz/41fc4e628ebbd49e/out/libtransaction_engine_fuzz-41fc4e628ebbd49e.
+     rlib
+     +1 more
+
+● A single unused import is left in fuzz/src/lib.rs. Removing it, then running
+  all three targets for 2 minutes with the branch's own run.sh:
+
+● Bash(sed -i 's/Engine, Record, Rejection, Transaction,$/Engine, Record,
+      Rejection,/' fuzz/src/lib.rs && (cd fuzz && cargo fmt) && cargo +nightly
+      fuzz build 2>&1 | gr…)
+  ⎿  0
+     ==> amount_parse: 2 workers for 120s, log in fuzz/logs/amount_parse.lo
+     g
+     … +11 lines (ctrl+o to expand)
+  ⎿  Updated fuzz/src/lib.rs +8 -9
+       9  use std::collections::{BTreeMap, HashMap, HashSet};
+      10 
+      11  use transaction_engine::{
+      12 -    Account, Amount, DisputeAction, DisputeKind, Engine, Record
+         -, Rejection, Transaction,                                      
+      13 -    TransactionKind,                                           
+      12 +    Account, Amount, DisputeAction, DisputeKind, Engine, Record
+         +, Rejection, TransactionKind,                                  
+      13  };
+      14 
+      15  #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+     ...
+      116                          acct.held - amount,
+      117                          false,
+      118                      ),
+      120 -                    (DisputeKind::Chargeback, State::Disputed)
+          - => (                                                         
+      121 -                        State::ChargedBack,                   
+      122 -                        acct.available,                       
+      123 -                        acct.held - amount,                   
+      124 -                        true,                                 
+      125 -                    ),                                        
+      119 +                    (DisputeKind::Chargeback, State::Disputed)
+          + => {                                                         
+      120 +                        (State::ChargedBack, acct.available, a
+          +cct.held - amount, true)                                      
+      121 +                    }                                         
+      122                      _ => return Err(Rejection::WrongState),
+      123                  };
+      124                  if !balances_fit(available, held) {
+     ...
+      158                  .filter(|(_, s)| *s == State::Disputed)
+      159                  .map(|(amt, _)| amt)
+      160                  .sum();
+      165 -            assert_eq!(a.held, disputed, "model: client {clien
+          -t} held != sum of disputed");                                 
+      161 +            assert_eq!(                                       
+      162 +                a.held, disputed,                             
+      163 +                "model: client {client} held != sum of dispute
+          +d"                                                            
+      164 +            );                                                
+      165          }
+      166      }
+      167  }
+  ⎿  Updated fuzz/fuzz_targets/csv_pipeline.rs +5 -4
+      29  }
+      30 
+      31  fn parse_report(out: &[u8]) -> Vec<Row> {
+      32 -    let mut reader = csv::ReaderBuilder::new()                 
+      33 -        .has_headers(true)                                     
+      34 -        .from_reader(out);                                     
+      32 +    let mut reader = csv::ReaderBuilder::new().has_headers(true
+         +).from_reader(out);                                            
+      33      let header = reader.headers().expect("report header readabl
+          e").clone();
+      34      assert_eq!(
+      35          header.iter().collect::<Vec<_>>(),
+     ...
+      70      match result {
+      71          Err(_) => {
+      72              assert!(out.is_empty(), "fatal error but output was
+           written");
+      75 -            assert!(expected.is_none(), "run failed but RecordR
+         -eader read everything");                                       
+      73 +            assert!(                                           
+      74 +                expected.is_none(),                            
+      75 +                "run failed but RecordReader read everything"  
+      76 +            );                                                 
+      77          }
+      78          Ok(()) => {
+      79              let rows = parse_report(&out);
+  ⎿  Updated fuzz/fuzz_targets/engine_model.rs +4 -1
+      189 
+      190          // Locked never clears.
+      191          for b in before.iter().filter(|b| b.4) {
+      192 -            let a = after.iter().find(|a| a.0 == b.0).expect("
+          -accounts are never removed");                                 
+      192 +            let a = after                                     
+      193 +                .iter()                                       
+      194 +                .find(|a| a.0 == b.0)                         
+      195 +                .expect("accounts are never removed");        
+      196              assert!(a.4, "client {} was unlocked by {record:?}
+           ", b.0);
+      197          }
+      198          assert!(after.len() >= before.len(), "an Account disap
+           peared");
+  ⎿  Updated fuzz/logs/engine_model.log +48 -82
+       1      Blocking waiting for file lock on package cache
+       2 -    Finished `release` profile [optimized + debuginfo] target(s
+         -) in 0.01s                                                     
+       2      Blocking waiting for file lock on package cache
+       3      Blocking waiting for file lock on package cache
+       4 +    Finished `release` profile [optimized + debuginfo] target(s
+         +) in 0.02s                                                     
+       5      Blocking waiting for file lock on package cache
+       6      Finished `release` profile [optimized + debuginfo] target(s
+          ) in 0.01s
+       7 -     Running `fuzz/target/x86_64-unknown-linux-gnu/release/engi
+         -ne_model -artifact_prefix=/home/neithanmo/Documents/Projects/tr
+         -ansaction-engine/fuzz/artifacts/engine_model/ -fork=4 -ignore_c
+         -rashes=1 -max_total_time=60 -close_fd_mask=2 -print_final_stats
+         -=1 -max_len=65536 /home/neithanmo/Documents/Projects/transactio
+         -n-engine/fuzz/corpus/engine_model`                             
+       7 +     Running `fuzz/target/x86_64-unknown-linux-gnu/release/engi
+         +ne_model -artifact_prefix=/home/neithanmo/Documents/Projects/tr
+         +ansaction-engine/fuzz/artifacts/engine_model/ -fork=8 -ignore_c
+         +rashes=1 -max_total_time=120 -close_fd_mask=2 -print_final_stat
+         +s=1 -max_len=65536 /home/neithanmo/Documents/Projects/transacti
+         +on-engine/fuzz/corpus/engine_model`                            
+       8  INFO: Running with entropic power schedule (0xFF, 100).
+       9 -INFO: Seed: 3691572534                                         
+      10 -INFO: Loaded 1 modules   (4004 inline 8-bit counters): 4004 [0x
+         -5ce2beab37a0, 0x5ce2beab4744),                                 
+      11 -INFO: Loaded 1 PC tables (4004 PCs): 4004 [0x5ce2beab4748,0x5ce
+         -2beac4188),                                                    
+      12 -INFO: -fork=4: fuzzing in separate process(s)                  
+      13 -INFO: -fork=4: 0 seed inputs, starting to fuzz in /tmp/libFuzze
+         -rTemp.FuzzWithFork1486000.dir                                  
+      14 -#33047: cov: 0 ft: 0 corp: 0 exec/s: 16523 oom/timeout/crash: 0
+         -/0/0 time: 2s job: 1 dft_time: 0                               
+      15 -  NEW_FUNC: 0x5ce2be8ebab0  (/home/neithanmo/Documents/Projects
+         -/transaction-engine/fuzz/target/x86_64-unknown-linux-gnu/releas
+         -e/engine_model+0x168ab0) (BuildId: 8f7378e52b3606abe794f6525b3c
+         -2548f11410e0)                                                  
+      16 -  NEW_FUNC: 0x5ce2be8ebda0  (/home/neithanmo/Documents/Projects
+         -/transaction-engine/fuzz/target/x86_64-unknown-linux-gnu/releas
+         -e/engine_model+0x168da0) (BuildId: 8f7378e52b3606abe794f6525b3c
+         -2548f11410e0)                                                  
+      17 -  NEW_FUNC: 0x5ce2be8ec8f0  (/home/neithanmo/Documents/Projects
+         -/transaction-engine/fuzz/target/x86_64-unknown-linux-gnu/releas
+         -e/engine_model+0x1698f0) (BuildId: 8f7378e52b3606abe794f6525b3c
+         -2548f11410e0)                                                  
+      18 -  NEW_FUNC: 0x5ce2be8edb80  (/home/neithanmo/Documents/Projects
+         -/transaction-engine/fuzz/target/x86_64-unknown-linux-gnu/releas
+         -e/engine_model+0x16ab80) (BuildId: 8f7378e52b3606abe794f6525b3c
+         -2548f11410e0)                                                  
+      19 -  NEW_FUNC: 0x5ce2be8ee190  (/home/neithanmo/Documents/Projects
+         -/transaction-engine/fuzz/target/x86_64-unknown-linux-gnu/releas
+         -e/engine_model+0x16b190) (BuildId: 8f7378e52b3606abe794f6525b3c
+         -2548f11410e0)                                                  
+      20 -  NEW_FUNC: 0x5ce2be8ee240  (/home/neithanmo/Documents/Projects
+         -/transaction-engine/fuzz/target/x86_64-unknown-linux-gnu/releas
+         -e/engine_model+0x16b240) (BuildId: 8f7378e52b3606abe794f6525b3c
+         -2548f11410e0)                                                  
+      21 -  NEW_FUNC: 0x5ce2be8ee2f0  (/home/neithanmo/Documents/Projects
+         -/transaction-engine/fuzz/target/x86_64-unknown-linux-gnu/releas
+         -e/engine_model+0x16b2f0) (BuildId: 8f7378e52b3606abe794f6525b3c
+         -2548f11410e0)                                                  
+      22 -  NEW_FUNC: 0x5ce2be8ee900  (/home/neithanmo/Documents/Projects
+         -/transaction-engine/fuzz/target/x86_64-unknown-linux-gnu/releas
+         -e/engine_model+0x16b900) (BuildId: 8f7378e52b3606abe794f6525b3c
+         -2548f11410e0)                                                  
+      23 -  NEW_FUNC: 0x5ce2be8eea90  (/home/neithanmo/Documents/Projects
+         -/transaction-engine/fuzz/target/x86_64-unknown-linux-gnu/releas
+         -e/engine_model+0x16ba90) (BuildId: 8f7378e52b3606abe794f6525b3c
+         -2548f11410e0)                                                  
+      24 -  NEW_FUNC: 0x5ce2be8efcd0  (/home/neithanmo/Documents/Projects
+         -/transaction-engine/fuzz/target/x86_64-unknown-linux-gnu/releas
+         -e/engine_model+0x16ccd0) (BuildId: 8f7378e52b3606abe794f6525b3c
+         -2548f11410e0)                                                  
+      25 -  NEW_FUNC: 0x5ce2be8f0f40  (/home/neithanmo/Documents/Projects
+         -/transaction-engine/fuzz/target/x86_64-unknown-linux-gnu/releas
+         -e/engine_model+0x16df40) (BuildId: 8f7378e52b3606abe794f6525b3c
+         -2548f11410e0)                                                  
+      26 -  NEW_FUNC: 0x5ce2be8f4cd0  (/home/neithanmo/Documents/Projects
+         -/transaction-engine/fuzz/target/x86_64-unknown-linux-gnu/releas
+         -e/engine_model+0x171cd0) (BuildId: 8f7378e52b3606abe794f6525b3c
+         -2548f11410e0)                                                  
+      27 -  NEW_FUNC: 0x5ce2be8f5150  (/home/neithanmo/Documents/Projects
+         -/transaction-engine/fuzz/target/x86_64-unknown-linux-gnu/releas
+         -e/engine_model+0x172150) (BuildId: 8f7378e52b3606abe794f6525b3c
+         -2548f11410e0)                                                  
+      28 -  NEW_FUNC: 0x5ce2be8f5a80  (/home/neithanmo/Documents/Projects
+         -/transaction-engine/fuzz/target/x86_64-unknown-linux-gnu/releas
+         -e/engine_model+0x172a80) (BuildId: 8f7378e52b3606abe794f6525b3c
+         -2548f11410e0)                                                  
+      29 -  NEW_FUNC: 0x5ce2be8f94e0  (/home/neithanmo/Documents/Projects
+         -/transaction-engine/fuzz/target/x86_64-unknown-linux-gnu/releas
+         -e/engine_model+0x1764e0) (BuildId: 8f7378e52b3606abe794f6525b3c
+         -2548f11410e0)                                                  
+      30 -  NEW_FUNC: 0x5ce2be8f9d60  (/home/neithanmo/Documents/Projects
+         -/transaction-engine/fuzz/target/x86_64-unknown-linux-gnu/releas
+         -e/engine_model+0x176d60) (BuildId: 8f7378e52b3606abe794f6525b3c
+         -2548f11410e0)                                                  
+      31 -  NEW_FUNC: 0x5ce2be8fa9e0  (/home/neithanmo/Documents/Projects
+         -/transaction-engine/fuzz/target/x86_64-unknown-linux-gnu/releas
+         -e/engine_model+0x1779e0) (BuildId: 8f7378e52b3606abe794f6525b3c
+         -2548f11410e0)                                                  
+      32 -  NEW_FUNC: 0x5ce2be8fc5a0  (/home/neithanmo/Documents/Projects
+         -/transaction-engine/fuzz/target/x86_64-unknown-linux-gnu/releas
+         -e/engine_model+0x1795a0) (BuildId: 8f7378e52b3606abe794f6525b3c
+         -2548f11410e0)                                                  
+      33 -  NEW_FUNC: 0x5ce2be8fdb20  (/home/neithanmo/Documents/Projects
+         -/transaction-engine/fuzz/target/x86_64-unknown-linux-gnu/releas
+         -e/engine_model+0x17ab20) (BuildId: 8f7378e52b3606abe794f6525b3c
+         -2548f11410e0)                                                  
+      34 -  NEW_FUNC: 0x5ce2be8fdd20  (/home/neithanmo/Documents/Projects
+         -/transaction-engine/fuzz/target/x86_64-unknown-linux-gnu/releas
+         -e/engine_model+0x17ad20) (BuildId: 8f7378e52b3606abe794f6525b3c
+         -2548f11410e0)                                                  
+      35 -  NEW_FUNC: 0x5ce2be8fe220  (/home/neithanmo/Documents/Projects
+         -/transaction-engine/fuzz/target/x86_64-unknown-linux-gnu/releas
+         -e/engine_model+0x17b220) (BuildId: 8f7378e52b3606abe794f6525b3c
+         -2548f11410e0)                                                  
+      36 -  NEW_FUNC: 0x5ce2be8fe9d0  (/home/neithanmo/Documents/Projects
+         -/transaction-engine/fuzz/target/x86_64-unknown-linux-gnu/releas
+         -e/engine_model+0x17b9d0) (BuildId: 8f7378e52b3606abe794f6525b3c
+         -2548f11410e0)                                                  
+      37 -  NEW_FUNC: 0x5ce2be8ff870  (/home/neithanmo/Documents/Projects
+         -/transaction-engine/fuzz/target/x86_64-unknown-linux-gnu/releas
+         -e/engine_model+0x17c870) (BuildId: 8f7378e52b3606abe794f6525b3c
+         -2548f11410e0)                                                  
+      38 -  NEW_FUNC: 0x5ce2be8ffee0  (/home/neithanmo/Documents/Projects
+         -/transaction-engine/fuzz/target/x86_64-unknown-linux-gnu/releas
+         -e/engine_model+0x17cee0) (BuildId: 8f7378e52b3606abe794f6525b3c
+         -2548f11410e0)                                                  
+     … +96 lines (ctrl+o to expand)
+  ⎿  Updated fuzz/logs/csv_pipeline.log +50 -29
+       2      Blocking waiting for file lock on package cache
+       3      Blocking waiting for file lock on package cache
+       4      Blocking waiting for file lock on package cache
+       5 -    Finished `release` profile [optimized + debuginfo] target(s
+         -) in 0.01s                                                     
+       6 -    Finished `release` profile [optimized + debuginfo] target(s
+         -) in 0.01s                                                     
+       7 -     Running `fuzz/target/x86_64-unknown-linux-gnu/release/csv_
+         -pipeline -artifact_prefix=/home/neithanmo/Documents/Projects/tr
+         -ansaction-engine/fuzz/artifacts/csv_pipeline/ -fork=4 -ignore_c
+         -rashes=1 -max_total_time=60 -close_fd_mask=2 -print_final_stats
+         -=1 -max_len=8192 -dict=fuzz/csv.dict /home/neithanmo/Documents/
+         -Projects/transaction-engine/fuzz/corpus/csv_pipeline`          
+       5 +    Blocking waiting for file lock on build directory          
+       6 +    Finished `release` profile [optimized + debuginfo] target(s
+         +) in 0.03s                                                     
+       7 +    Blocking waiting for file lock on package cache            
+       8 +    Finished `release` profile [optimized + debuginfo] target(s
+         +) in 0.02s                                                     
+       9 +     Running `fuzz/target/x86_64-unknown-linux-gnu/release/csv_
+         +pipeline -artifact_prefix=/home/neithanmo/Documents/Projects/tr
+         +ansaction-engine/fuzz/artifacts/csv_pipeline/ -fork=8 -ignore_c
+         +rashes=1 -max_total_time=120 -close_fd_mask=2 -print_final_stat
+         +s=1 -max_len=8192 -dict=fuzz/csv.dict /home/neithanmo/Documents
+         +/Projects/transaction-engine/fuzz/corpus/csv_pipeline`         
+      10  Dictionary: 27 entries
+      11  INFO: Running with entropic power schedule (0xFF, 100).
+      10 -INFO: Seed: 3680496418                                         
+      11 -INFO: Loaded 1 modules   (7097 inline 8-bit counters): 7097 [0x
+         -5575386342c0, 0x557538635e79),                                 
+      12 -INFO: Loaded 1 PC tables (7097 PCs): 7097 [0x557538635e80,0x557
+         -538651a10),                                                    
+      13 -INFO: -fork=4: fuzzing in separate process(s)                  
+      14 -INFO: -fork=4: 39 seed inputs, starting to fuzz in /tmp/libFuzz
+         -erTemp.FuzzWithFork1485978.dir                                 
+      15 -#1021: cov: 1269 ft: 3634 corp: 39 exec/s: 510 oom/timeout/cras
+         -h: 0/0/0 time: 2s job: 1 dft_time: 0                           
+      16 -#1723: cov: 1343 ft: 5284 corp: 187 exec/s: 234 oom/timeout/cra
+         -sh: 0/0/0 time: 3s job: 2 dft_time: 0                          
+      17 -#3172: cov: 1349 ft: 5645 corp: 240 exec/s: 362 oom/timeout/cra
+         -sh: 0/0/0 time: 4s job: 3 dft_time: 0                          
+      18 -#10381: cov: 1354 ft: 5810 corp: 276 exec/s: 1441 oom/timeout/c
+         -rash: 0/0/0 time: 5s job: 4 dft_time: 0                        
+      19 -#11643: cov: 1374 ft: 5870 corp: 310 exec/s: 210 oom/timeout/cr
+         -ash: 0/0/0 time: 9s job: 5 dft_time: 0                         
+      20 -#13512: cov: 1376 ft: 5991 corp: 351 exec/s: 267 oom/timeout/cr
+         -ash: 0/0/0 time: 11s job: 6 dft_time: 0                        
+      21 -#14789: cov: 1379 ft: 6046 corp: 377 exec/s: 159 oom/timeout/cr
+         -ash: 0/0/0 time: 12s job: 7 dft_time: 0                        
+      22 -#17170: cov: 1380 ft: 6081 corp: 394 exec/s: 264 oom/timeout/cr
+         -ash: 0/0/0 time: 14s job: 8 dft_time: 0                        
+      23 -#18739: cov: 1384 ft: 6124 corp: 417 exec/s: 156 oom/timeout/cr
+         -ash: 0/0/0 time: 19s job: 9 dft_time: 0                        
+      24 -#20772: cov: 1384 ft: 6175 corp: 433 exec/s: 184 oom/timeout/cr
+         -ash: 0/0/0 time: 22s job: 10 dft_time: 0                       
+      25 -#22635: cov: 1385 ft: 6182 corp: 438 exec/s: 155 oom/timeout/cr
+         -ash: 0/0/0 time: 25s job: 11 dft_time: 0                       
+      26 -#25660: cov: 1385 ft: 6205 corp: 447 exec/s: 232 oom/timeout/cr
+         -ash: 0/0/0 time: 28s job: 12 dft_time: 0                       
+      27 -#28439: cov: 1388 ft: 6222 corp: 458 exec/s: 198 oom/timeout/cr
+         -ash: 0/0/0 time: 34s job: 13 dft_time: 0                       
+      28 -#30475: cov: 1388 ft: 6242 corp: 466 exec/s: 135 oom/timeout/cr
+         -ash: 0/0/0 time: 38s job: 14 dft_time: 0                       
+      29 -#32039: cov: 1388 ft: 6246 corp: 468 exec/s: 97 oom/timeout/cra
+         -sh: 0/0/0 time: 42s job: 15 dft_time: 0                        
+      30 -#34102: cov: 1388 ft: 6256 corp: 472 exec/s: 121 oom/timeout/cr
+         -ash: 0/0/0 time: 46s job: 16 dft_time: 0                       
+      31 -#36101: cov: 1389 ft: 6271 corp: 478 exec/s: 111 oom/timeout/cr
+         -ash: 0/0/0 time: 53s job: 17 dft_time: 0                       
+      32 -#38070: cov: 1389 ft: 6278 corp: 483 exec/s: 103 oom/timeout/cr
+         -ash: 0/0/0 time: 58s job: 18 dft_time: 0                       
+      33 -#41671: cov: 1389 ft: 6299 corp: 491 exec/s: 180 oom/timeout/cr
+         -ash: 0/0/0 time: 62s job: 19 dft_time: 0                       
+      34 -INFO: fuzzed for 62 seconds, wrapping up soon                  
+      35 -INFO: exiting: 0 time: 63s                                     
+      12 +INFO: Seed: 3040208396                                         
+     … +44 lines (ctrl+o to expand)
+  ⎿  … +3 files changed
+     fuzz/target/x86_64-unknown-linux-gnu/release/build/transaction-engine-
+     fuzz/41fc4e628ebbd49e/out/libtransaction_engine_fuzz-41fc4e628ebbd49e.
+     rlib
+     fuzz/target/x86_64-unknown-linux-gnu/release/build/transaction-engine-
+     fuzz/41fc4e628ebbd49e/out/libtransaction_engine_fuzz-41fc4e628ebbd49e.
+     rmeta
+     fuzz/logs/amount_parse.log
+  ⎿  (timeout 10m)
+
+● No crashes in two minutes, and the engine target gained coverage through the
+  constructor path (800 edges, up from 781). The CSV target is slow at about 114
+  runs per second for small inputs, so I'm looking into why next. · summary
+
+  Read 1 file (ctrl+o to expand)
+
+● Each run should take well under 9 ms on 8 KB, so I'm timing a single process
+  without -fork to see whether forking is skewing the number. · summary
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Single-process it's about 500 runs/s on ~2.5 KB inputs, so -fork explains most
+  of the gap. I'll check how much of the rest comes from AddressSanitizer:
+
+● Bash(S=/tmp/claude-1000/-home-neithanmo-Documents-Projects-transaction-engine/
+      d4b8d995-2b47-48a9-a369-5bb33178df42/scratchpad && cargo +nightly fuzz run
+      -s none csv_…)
+  ⎿  #23426  DONE   cov: 830 ft: 3739 corp: 510/1230Kb lim: 8192 exec/s:
+     1464
+      rss: 32Mb
+  ⎿  Updated fuzz/target/.rustc_info.json +1 -1
+      1 -{"rustc_fingerprint":1990462997822764420,"outputs":{"32858507863
+        -37094453":{"success":true,"status":"","code":0,"stdout":"rustc 1
+        -.99.0-nightly (73dc9167f 2026-08-01)\nbinary: rustc\ncommit-hash
+        -: 73dc9167f1cd099e525c9ade2e068d1907b78564\ncommit-date: 2026-08
+        --01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.99.0-nightly\nLL
+        -VM version: 22.1.8\n","stderr":""},"688615164149687033":{"succes
+        -s":true,"status":"","code":0,"stdout":"___\nlib___.rlib\nlib___.
+        -so\nlib___.so\nlib___.a\nlib___.so\n/home/neithanmo/.rustup/tool
+        -chains/nightly-x86_64-unknown-linux-gnu\noff\npacked\nunpacked\n
+        -___\ndebug_assertions\nfmt_debug=\"full\"\nfuzzing\noverflow_che
+        -cks\npanic=\"unwind\"\nproc_macro\nrelocation_model=\"pic\"\nsan
+        -itize=\"address\"\ntarget_abi=\"\"\ntarget_arch=\"x86_64\"\ntarg
+        -et_endian=\"little\"\ntarget_env=\"gnu\"\ntarget_family=\"unix\"
+        -\ntarget_feature=\"fxsr\"\ntarget_feature=\"sse\"\ntarget_featur
+        -e=\"sse2\"\ntarget_feature=\"x87\"\ntarget_has_atomic\ntarget_ha
+        -s_atomic=\"16\"\ntarget_has_atomic=\"32\"\ntarget_has_atomic=\"6
+        -4\"\ntarget_has_atomic=\"8\"\ntarget_has_atomic=\"ptr\"\ntarget_
+        -has_atomic_load_store\ntarget_has_atomic_load_store=\"16\"\ntarg
+        -et_has_atomic_load_store=\"32\"\ntarget_has_atomic_load_store=\"
+        -64\"\ntarget_has_atomic_load_store=\"8\"\ntarget_has_atomic_load
+        -_store=\"ptr\"\ntarget_has_atomic_primitive_alignment=\"16\"\nta
+        -rget_has_atomic_primitive_alignment=\"32\"\ntarget_has_atomic_pr
+        -imitive_alignment=\"64\"\ntarget_has_atomic_primitive_alignment=
+        -\"8\"\ntarget_has_atomic_primitive_alignment=\"ptr\"\ntarget_has
+        -_reliable_f128\ntarget_has_reliable_f16\ntarget_has_reliable_f16
+        -_math\ntarget_has_threads\ntarget_object_format=\"elf\"\ntarget_
+        -os=\"linux\"\ntarget_pointer_width=\"64\"\ntarget_thread_local\n
+        -target_vendor=\"unknown\"\nub_checks\nunix\n","stderr":""},"7971
+        -740275564407648":{"success":true,"status":"","code":0,"stdout":"
+        -___\nlib___.rlib\nlib___.so\nlib___.so\nlib___.a\nlib___.so\n/ho
+        -me/neithanmo/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu
+        -\noff\npacked\nu … [+1205 chars]                                
+        \ No newline at end of file
+      1 +{"rustc_fingerprint":1990462997822764420,"outputs":{"79717402755
+        +64407648":{"success":true,"status":"","code":0,"stdout":"___\nli
+        +b___.rlib\nlib___.so\nlib___.so\nlib___.a\nlib___.so\n/home/neit
+        +hanmo/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu\noff\n
+        +packed\nunpacked\n___\ndebug_assertions\nfmt_debug=\"full\"\nove
+        +rflow_checks\npanic=\"unwind\"\nproc_macro\nrelocation_model=\"p
+        +ic\"\ntarget_abi=\"\"\ntarget_arch=\"x86_64\"\ntarget_endian=\"l
+        +ittle\"\ntarget_env=\"gnu\"\ntarget_family=\"unix\"\ntarget_feat
+        +ure=\"fxsr\"\ntarget_feature=\"sse\"\ntarget_feature=\"sse2\"\nt
+        +arget_feature=\"x87\"\ntarget_has_atomic\ntarget_has_atomic=\"16
+        +\"\ntarget_has_atomic=\"32\"\ntarget_has_atomic=\"64\"\ntarget_h
+        +as_atomic=\"8\"\ntarget_has_atomic=\"ptr\"\ntarget_has_atomic_lo
+        +ad_store\ntarget_has_atomic_load_store=\"16\"\ntarget_has_atomic
+        +_load_store=\"32\"\ntarget_has_atomic_load_store=\"64\"\ntarget_
+        +has_atomic_load_store=\"8\"\ntarget_has_atomic_load_store=\"ptr\
+        +"\ntarget_has_atomic_primitive_alignment=\"16\"\ntarget_has_atom
+        +ic_primitive_alignment=\"32\"\ntarget_has_atomic_primitive_align
+        +ment=\"64\"\ntarget_has_atomic_primitive_alignment=\"8\"\ntarget
+        +_has_atomic_primitive_alignment=\"ptr\"\ntarget_has_reliable_f12
+        +8\ntarget_has_reliable_f16\ntarget_has_reliable_f16_math\ntarget
+        +_has_threads\ntarget_object_format=\"elf\"\ntarget_os=\"linux\"\
+        +ntarget_pointer_width=\"64\"\ntarget_thread_local\ntarget_vendor
+        +=\"unknown\"\nub_checks\nunix\n","stderr":""},"32858507863370944
+        +53":{"success":true,"status":"","code":0,"stdout":"rustc 1.99.0-
+        +nightly (73dc9167f 2026-08-01)\nbinary: rustc\ncommit-hash: 73dc
+        +9167f1cd099e525c9ade2e068d1907b78564\ncommit-date: 2026-08-01\nh
+        +ost: x86_64-unknown-linux-gnu\nrelease: 1.99.0-nightly\nLLVM ver
+        +sion: 22.1.8\n","stderr":""},"688615164149687033":{"success":tru
+        +e,"status":"","code":0,"stdout":"___\nlib___.rlib\nlib___.so\nli
+        +b___.so\nlib___.a\nlib___.so\n/home/neithanmo/.rustup/toolchains
+        +/nightly-x86_64-unknown-linux-gnu\noff\npacked\nunpacked\n___\nd
+        +ebug_assertions\ … [+2617 chars]                                
+        \ No newline at end of file
+  ⎿  (timeout 5m)
+
+● Turning off AddressSanitizer makes it about 3× faster (1,464 vs about 500
+  runs/s). Next I'll check the diff and whether the README covers fuzzing yet,
+  then commit:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● csv_pipeline.rs changed, but I didn't edit it, so that must be cargo fmt. I'll
+  confirm, and read the testing list in the README to add a fuzzing entry:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● It's formatting only, so I'll keep it. Adding a fuzzing entry to the README
+  after the volume-test block, then committing:
+
+● Update(README.md)
+  ⎿  Added 6 lines
+      113  ```sh
+      114  cargo test --release --test large_stream -- --ignored
+      115  ```
+      116 +                                                              
+      117 +- **Fuzzing** (`fuzz/`, nightly + `cargo-fuzz`, outside `cargo
+          + test`): `engine_model` applies structured Record sequences to
+          + the `Engine` and to an independent `i128` reference model, ch
+          +ecking every result, every balance and the invariants after ea
+          +ch step; `csv_pipeline` feeds raw bytes through `run`, seeded 
+          +with the fixtures; `amount_parse` checks `Amount` parsing agai
+          +nst a reference parser and a format/parse round trip. Run all 
+          +three in parallel for a time budget in seconds (default 7200):
+      118 +                                                              
+      119 +```sh                                                         
+      120 +fuzz/run.sh 600                                               
+      121 +```                                                           
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Fuzzing is set up on feat/fuzzing, together with the Transaction::new
+  refactor. A 2-minute run of all three targets found no crashes, and cargo test
+  still passes. Nothing is pushed.
+
+  I committed the refactor to main by mistake. You'd switched back to main after
+  merging PR #10, and I didn't check the branch first. I copied that commit
+  onto feat/fuzzing and reset local main to origin/main. Since it was never
+  pushed, nothing on the remote changed.
+
+  I built on your existing fuzz branch rather than writing a new one. A local
+  feat/fuzzing (9df9d85) already had a full setup: three targets, a reference
+  model, run.sh, a dictionary, and seeds taken from the fixtures. It's stronger
+  than what I'd proposed, because engine_model compares every result and balance
+  against an independent i128 model. The untracked corpus, artifacts and logs
+  in fuzz/ came from running it.
+
+  Branch history:
+  - 9df9d85: your fuzz targets, unchanged.
+  - 3356e1a: the Transaction::new refactor.
+  - 403b672: brings the fuzz code in line with the refactor.
+    - The model reads Transaction through its new getters.
+    - engine_model builds records with Transaction::new.
+    - The amount generator no longer forces amounts to be at least 1, so zero
+      and negative amounts now reach the constructor. The target checks they're
+      refused and skips them, so the constructor is fuzzed too. That's where the
+      new coverage came from (781 → 800).
+    - A README entry for the fuzz targets and fuzz/run.sh.
+
+  2-minute run (fuzz/run.sh 120):
+
+  ┌──────────────┬───────┬─────────┐
+  │    Target    │ Runs  │ Crashes │
+  ├──────────────┼───────┼─────────┤
+  │ engine_model │ 2.8M  │ 0       │
+  ├──────────────┼───────┼─────────┤
+  │ csv_pipeline │ 74k   │ 0       │
+  ├──────────────┼───────┼─────────┤
+  │ amount_parse │ 14.9M │ 0       │
+  └──────────────┴───────┴─────────┘
+
+  csv_pipeline is slow, at about 114 runs/s in -fork mode. Without forking it
+  does about 500/s. With AddressSanitizer turned off (-s none) as well, it
+  reaches about 1,460/s. The crate has no unsafe code, so AddressSanitizer would
+  only catch memory bugs inside dependencies like csv. Passing -s none in
+  run.sh for the two slower targets would give about 3× more runs per hour. I
+  haven't changed this.
+
+  The two-minute run is only a smoke test. To actually build confidence, run
+  fuzz/run.sh with its 2-hour default before you open the PR.
+
+✻ Baked for 5m 34s · done 2:39 PM
+
+※ recap: You're adding fuzzing so the engine can't crash, and positive amounts are now enforced by Transaction::new, with all three fuzz targets on feat/fuzzing finding no crashes. Next, run fuzz/run.sh for its 2-hour default before opening the PR. (turn off recaps in /config)
