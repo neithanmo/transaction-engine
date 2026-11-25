@@ -36,7 +36,7 @@ Every `*.expected.csv` follows the report format from the README and issue #1:
 | `rejected-withdrawal-creates-account` | A Withdrawal from an unknown Client is Rejected for insufficient funds but still creates a zero Account. | README *When an Account is created* (US 25) |
 | `input-formatting` | Whitespace around fields, reordered columns, mixed-case `type`, and Dispute rows with no trailing amount column are all accepted. | README *Input and errors* (US 9–12) |
 | `malformed-rows` | Unknown type, an unparsable amount, a Record missing fields, and invalid UTF-8 are skipped as Malformed and never create an Account, while valid Records around them still apply. The input file contains a raw invalid byte. | README *Input and errors* → Malformed (US 13, 14) |
-| `amount-edge-cases` | Four decimals and trailing zeros beyond four are accepted exactly; five significant decimals, zero, negative and missing amounts are Rejected; a Deposit that would overflow is Rejected. | README *Amounts* (US 15–20) |
+| `amount-edge-cases` | Four decimals and trailing zeros beyond four are accepted exactly; five significant decimals, zero, negative and missing amounts are Malformed; a Deposit that would overflow is Rejected. | README *Amounts* (US 15–20) |
 
 ### Notes on hand-derived values
 

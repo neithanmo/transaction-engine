@@ -46,11 +46,14 @@ An Account is never unlocked.
 
 ### Amounts
 
-Amounts are fixed-point integers in units of 0.0001, stored in an `i64` (up to about 922 trillion), and parsed without going through floating point, so no rounding ever happens. These Records are Rejected:
+Amounts are fixed-point integers in units of 0.0001, stored in an `i64` (up to about 922 trillion), and parsed without going through floating point, so no rounding ever happens. See [ADR 0002](./docs/adr/0002-amounts-are-fixed-point-i64.md).
+
+These Records are Malformed, because their amount never becomes a valid Amount:
 
 - an amount with more than four significant decimal places (trailing zeros such as `1.00000` are accepted);
-- a zero or negative amount, or a Deposit or Withdrawal with no amount;
-- a Record that would overflow Available, Held or Total.
+- a zero or negative amount, or a Deposit or Withdrawal with no amount.
+
+A Record that would overflow Available, Held or Total is Rejected.
 
 An amount on a Dispute action is ignored.
 
