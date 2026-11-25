@@ -37,6 +37,15 @@ Every `*.expected.csv` follows the report format from the README and issue #1:
 | `input-formatting` | Whitespace around fields, reordered columns, and Dispute rows with no trailing amount column are all accepted. | README *Input and errors* (US 9–12) |
 | `malformed-rows` | Unknown type, an unparsable amount, a Record missing fields, and invalid UTF-8 are skipped as Malformed and never create an Account, while valid Records around them still apply. The input file contains a raw invalid byte. | README *Input and errors* → Malformed (US 13, 14) |
 | `amount-edge-cases` | Four decimals and trailing zeros beyond four are accepted exactly; five significant decimals, zero, negative and missing amounts are Malformed; a Deposit that would overflow is Rejected. | README *Amounts* (US 15–20) |
+| `decimal-shorthand-and-trailing-zeros` | `.5`, `5.` and more than four trailing zeros (`1.2345000`) parse exactly; sums to `6.0`. | README *Amounts* |
+| `dispute-ignores-populated-or-garbage-amount` | A populated or unparsable 4th column on a Dispute or Resolve is ignored; the full Deposit amount is Held. | README *Input and errors* |
+| `multi-deposit-partial-chargeback-and-debt-recovery` | Two simultaneous Disputes; one Resolved, one Charged back; a later Deposit pays the debt down on the Locked Account while a Withdrawal is still Rejected. | README *Balances can go negative*, *Locked Accounts* |
+| `active-held-funds-at-eof` | A Dispute still open at end of input is reported as Held. | README *Deposit lifecycle* |
+| `header-only-zero-accounts` | A header-only file prints only the output header. | README *Input and errors* |
+| `u16-u32-zero-and-max-boundaries` | Client and tx ids at `0` and at `u16`/`u32` max are accepted. | README *Input and errors* |
+| `resolve-rejected-outside-disputed-state` | Resolve of a Settled Deposit, a second Resolve, and a Resolve or Dispute after Chargeback are all Rejected; so is a Dispute of an already-Disputed Deposit. | README *Deposit lifecycle* |
+| `resolve-wrong-target-rejected` | Resolve targeting a Withdrawal, an unknown tx, another Client's Deposit, or from an unknown Client is Rejected and creates no Account. | README *A Dispute action must come from the Deposit's owner*; ADR 0001 |
+| `resolve-on-locked-account-and-from-negative` | Resolve restores a negative Available; a Resolve on a Locked Account still releases Held funds. | README *Locked Accounts* |
 
 ### Notes on hand-derived values
 
@@ -48,3 +57,11 @@ Every `*.expected.csv` follows the report format from the README and issue #1:
   Client 3 never appears because its Deposit reused id `3`.
 - `amount-edge-cases`: Client 1 is `1.2345 + 2.5`; the two 900-trillion Deposits for
   Client 2 overflow on the second, so only the first (`900000000000000.0`) stands.
+- `resolve-rejected-outside-disputed-state`: every Rejected Resolve would, if applied, move
+  money out of an empty Held (or re-credit a charged-back 10), so the final `40.0` / `0.0`
+  only holds if all of them are skipped.
+- `resolve-wrong-target-rejected`: Client 2 is `20 − 5 = 15`, with the Deposit still Disputed
+  (`-5.0` Available, `20.0` Held); Client 3 never appears.
+- `resolve-on-locked-account-and-from-negative`: `100 − 80 = 20`, Dispute → `−80/100`, Resolve → `20/0`;
+  Deposits 30 and 10 → `60`; both Disputed → `20/40`; Chargeback of 10 → `20/30`, Locked;
+  Resolve of 30 → `50/0`; the final Withdrawal is Rejected.
