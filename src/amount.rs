@@ -241,9 +241,15 @@ mod tests {
 
     #[test]
     fn rejects_value_beyond_i64_range() {
-        assert_eq!(parse("99999999999999999999"), Err(AmountParseError::OutOfRange));
+        assert_eq!(
+            parse("99999999999999999999"),
+            Err(AmountParseError::OutOfRange)
+        );
         // one unit past i64::MAX
-        assert_eq!(parse("922337203685477.5808"), Err(AmountParseError::OutOfRange));
+        assert_eq!(
+            parse("922337203685477.5808"),
+            Err(AmountParseError::OutOfRange)
+        );
     }
 
     // --- formatting: always four decimal places ---
@@ -297,13 +303,25 @@ mod tests {
 
     #[test]
     fn addition_reports_overflow_in_both_directions() {
-        assert_eq!(Amount::from_units(i64::MAX).checked_add(Amount::from_units(1)), None);
-        assert_eq!(Amount::from_units(i64::MIN).checked_add(Amount::from_units(-1)), None);
+        assert_eq!(
+            Amount::from_units(i64::MAX).checked_add(Amount::from_units(1)),
+            None
+        );
+        assert_eq!(
+            Amount::from_units(i64::MIN).checked_add(Amount::from_units(-1)),
+            None
+        );
     }
 
     #[test]
     fn subtraction_reports_overflow_in_both_directions() {
-        assert_eq!(Amount::from_units(i64::MIN).checked_sub(Amount::from_units(1)), None);
-        assert_eq!(Amount::from_units(i64::MAX).checked_sub(Amount::from_units(-1)), None);
+        assert_eq!(
+            Amount::from_units(i64::MIN).checked_sub(Amount::from_units(1)),
+            None
+        );
+        assert_eq!(
+            Amount::from_units(i64::MAX).checked_sub(Amount::from_units(-1)),
+            None
+        );
     }
 }
