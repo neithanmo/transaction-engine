@@ -50,7 +50,7 @@ An Account is never unlocked.
 
 ### Amounts
 
-Amounts are fixed-point integers in units of 0.0001, stored in an `i64` this gives us up to `i64::MAX` range(up to about 922 trillion), and parsed without going through floating point, so no rounding ever happens. See [ADR 0002](./docs/adr/0002-amounts-are-fixed-point-i64.md).
+Amounts are fixed-point integers in units of 0.0001, stored in an `i64` (up to about 922 trillion), and parsed without going through floating point, so no rounding ever happens. See [ADR 0002](./docs/adr/0002-amounts-are-fixed-point-i64.md).
 
 These Records are Malformed, because their amount never becomes a valid Amount:
 
@@ -63,13 +63,15 @@ An amount on a Dispute action is ignored.
 
 ## Input and errors
 
-Whitespace around fields and headers is trimmed, columns are matched by header name, Dispute actions may omit the trailing amount column.
+Whitespace around fields and headers is trimmed, columns are matched by header name, and Dispute actions may omit the trailing amount column. Header names and `type` values are case-sensitive. Headers must include lowercase `type`, `client`, `tx` and `amount`; type values must be lowercase `deposit`, `withdrawal`, `dispute`, `resolve` or `chargeback`.
 
 | Outcome | Examples | Effect |
 | --- | --- | --- |
-| **Fatal** | wrong arguments, unreadable file, missing header columns, I/O error mid-stream | exit non-zero, nothing on stdout |
-| **Malformed** | unknown type, case mismatch, unparsable number, missing field, invalid UTF-8 | Record skipped, warning on stderr (the first 100, then one line counting the rest) |
+| **Fatal** | wrong arguments, unreadable or empty file, missing or incorrectly cased header columns, I/O error mid-stream | exit non-zero, nothing on stdout |
+| **Malformed** | unknown or incorrectly cased type value, unparsable number, missing field, invalid UTF-8 | Record skipped, warning on stderr (the first 100, then one line counting the rest) |
 | **Rejected** | insufficient funds, duplicate id, no such Deposit, wrong lifecycle state, Withdrawal from a Locked Account, overflow | Record skipped |
+
+An empty file is Fatal because it has no header. A file containing only a valid header succeeds with zero Accounts and writes only the output header.
 
 A fatal error prints nothing, because balances from a half-read file would look final but be wrong. CSV has no framing, so a stream truncated mid-line cannot be told apart from a short row: it shows up as a Malformed Record, or, if cut inside the amount (`1.` for `1.5`), it is silently read as a smaller value.
 
@@ -109,6 +111,5 @@ disputes, duplicate IDs, formatting, malformed rows, and amount edge cases.
 200-round case with:
 
 ```sh
-    cargo test --release --test large_stream -- --ignored
-
+cargo test --release --test large_stream -- --ignored
 ```

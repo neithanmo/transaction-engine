@@ -23,7 +23,7 @@ Every `*.expected.csv` follows the report format from the README and issue #1:
 ## Scenarios
 
 | Fixture | What it proves | Rule |
-|---|---|---|
+| --- | --- | --- |
 | `spec-example` | Two Clients; Client 2's over-Available Withdrawal is Rejected and leaves balances untouched. | README *Deposits and Withdrawals* (US 22–24) |
 | `deposit-withdraw-dispute-chargeback` | Deposit 100, withdraw 80, Dispute the Deposit (Available → −80, Held 100), Chargeback (Total → −80, Locked). | README *Balances can go negative, but only through disputes*; ADR 0001 |
 | `dispute-resolve-dispute-chargeback` | A Resolve returns a Deposit to Settled so it can be Disputed again; the second Dispute is Charged back. | README *Deposit lifecycle* (US 29, 30) |
@@ -34,7 +34,7 @@ Every `*.expected.csv` follows the report format from the README and issue #1:
 | `dispute-targets-withdrawal` | A Dispute targeting a Withdrawal's id is Rejected (Withdrawals are not retained as disputable). | ADR 0001 (US 36) |
 | `duplicate-transaction-ids` | A reused id is Rejected whether the first use was an applied Deposit or a Rejected Withdrawal, and a duplicate for a brand-new Client creates no Account. | README *Transaction ids are checked for uniqueness* (US 26, 27) |
 | `rejected-withdrawal-creates-account` | A Withdrawal from an unknown Client is Rejected for insufficient funds but still creates a zero Account. | README *When an Account is created* (US 25) |
-| `input-formatting` | Whitespace around fields, reordered columns, mixed-case `type`, and Dispute rows with no trailing amount column are all accepted. | README *Input and errors* (US 9–12) |
+| `input-formatting` | Whitespace around fields, reordered columns, and Dispute rows with no trailing amount column are all accepted. | README *Input and errors* (US 9–12) |
 | `malformed-rows` | Unknown type, an unparsable amount, a Record missing fields, and invalid UTF-8 are skipped as Malformed and never create an Account, while valid Records around them still apply. The input file contains a raw invalid byte. | README *Input and errors* → Malformed (US 13, 14) |
 | `amount-edge-cases` | Four decimals and trailing zeros beyond four are accepted exactly; five significant decimals, zero, negative and missing amounts are Malformed; a Deposit that would overflow is Rejected. | README *Amounts* (US 15–20) |
 

@@ -106,8 +106,8 @@ impl Columns {
         })
     }
 
-    /// Understand one line's fields as a [`Record`]. The `type` matches
-    /// case-insensitively, and a Dispute action's amount is ignored.
+    /// Understand one line's fields as a [`Record`]. The `type` must match
+    /// one of the lowercase names exactly, and a Dispute action's amount is ignored.
     fn parse(&self, fields: &StringRecord) -> Result<Record, Malformed> {
         let field = |index: usize, name: &'static str| {
             fields
