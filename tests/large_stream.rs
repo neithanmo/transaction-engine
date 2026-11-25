@@ -119,25 +119,10 @@ impl SyntheticStream {
         u32::try_from(index * SLOTS + slot + 1).expect("checked in new")
     }
 
-    /// Append one line. With noise on, fields are padded and the `type` case
-    /// varies; a Dispute action then also omits the trailing amount column.
+    /// Append one line. With noise on, fields are padded, and a Dispute action
+    /// omits the trailing amount column.
     fn line(&mut self, kind: &str, client: u16, id: u32, amount: Option<&str>) {
         let line = if self.noise {
-            let kind = match id % 3 {
-                0 => kind.to_ascii_uppercase(),
-                1 => kind
-                    .chars()
-                    .enumerate()
-                    .map(|(i, c)| {
-                        if i % 2 == 0 {
-                            c.to_ascii_uppercase()
-                        } else {
-                            c
-                        }
-                    })
-                    .collect(),
-                _ => kind.to_owned(),
-            };
             match amount {
                 Some(a) => format!("  {kind} , {client},{id} ,  {a}\n"),
                 None => format!(" {kind},{client} , {id}\n"),
@@ -249,6 +234,11 @@ impl SyntheticStream {
         // stay rare (see the README's Input and errors).
         if client == 1 {
             let id = self.id(round, client, MALFORMED_SLOT);
+
+            // Type values are case-sensitive. This must be Malformed and must not
+            // create the STRANGER Account.
+            self.line("DePoSiT", STRANGER, id, Some("1.0"));
+
             let lines = [
                 format!("sprinkle,{STRANGER},{id},1.0\n"),
                 format!("deposit,{STRANGER},{id},abc\n"),
