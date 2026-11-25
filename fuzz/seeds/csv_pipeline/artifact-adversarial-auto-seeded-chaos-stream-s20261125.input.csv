@@ -1,0 +1,401 @@
+ type , client , tx , amount 
+withdrawal,1,10000,21.6901
+ deposit , 6 , 10001 , 18.5098 
+deposit,7,10000,99.99
+deposit,10,10001,99.99
+resolve,2,10001
+deposit,2,10007,-1.25
+ deposit , 8 , 10002 , 3.4743 
+ deposit , 11 , 10003 , 9.1914 
+ deposit , 13 , 10004 , 12.3591 
+withdrawal,18,10005,29.9551
+withdrawal,12,10006,23.9322
+ deposit , 18 , 10007 , 16.4943 
+ deposit , 20 , 10008 , 21.1518 
+refund,6,10022,5.0
+deposit,16,10023,-1.25
+resolve,12,10006
+withdrawal,10,10009,17.3673
+dispute,16,10000
+withdrawal,17,10010,22.1317
+ deposit , 10 , 10011 , 15.5685 
+chargeback,10,10011
+withdrawal,7,10012,16.022
+chargeback,18,331499
+ deposit , 17 , 10013 , 4.542 
+withdrawal,9,10014,14.6883
+ deposit , 11 , 10015 , 5.7741 
+withdrawal,7,10016,8.1795
+ deposit , 1 , 10017 , 13.476 
+resolve,20,30225
+ deposit , 6 , 10018 , 7.2978 
+ deposit , 13 , 10019 , 1.9169 
+withdrawal,20,10020,27.4166
+ deposit , 15 , 10021 , 8.6803 
+dispute,13,10004
+dispute,11,10015
+dispute,13,10019
+withdrawal,20,10022,6.1035
+withdrawal,5,10023,3.2918
+withdrawal,2,10024,16.4265
+withdrawal,7,10025,19.5027
+withdrawal,10,10026,9.4397
+dispute,11,398452
+dispute,13,10004
+dispute,1,10017
+dispute,7,10002
+deposit,3,10008,99.99
+deposit,2,10023,99.99
+ deposit , 6 , 10027 , 15.3396 
+ deposit , 19 , 10028 , 14.0631 
+dispute,12,10006
+withdrawal,19,10029,4.5565
+withdrawal,2,10030,4.2477
+withdrawal,17,10031,21.3168
+resolve,8,98939
+ deposit , 7 , 10032 , 19.4011 
+withdrawal,2,10033,2.0486
+ deposit , 9 , 10034 , 13.0885 
+chargeback,5,10030
+withdrawal,9,10035,7.2982
+ deposit , 3 , 10036 , 22.7325 
+withdrawal,15,10037,6.388
+resolve,18,10005
+deposit,3,10100,-1.25
+withdrawal,12,10038,5.1038
+withdrawal,4,10039,14.4692
+ deposit , 11 , 10040 , 13.3918 
+withdrawal,14,10041,7.0102
+withdrawal,18,10042,1.321
+ deposit , 9 , 10043 , 2.5115 
+deposit,20,10033,99.99
+ deposit , 15 , 10044 , 24.6952 
+withdrawal,11,10045,15.1982
+ deposit , 13 , 10046 , 16.2341 
+resolve,12,10002
+deposit,16,10033,99.99
+deposit,17,10122,0.0
+dispute,9,10014
+dispute,16,10007
+ deposit , 5 , 10047 , 20.6409 
+ deposit , 12 , 10048 , 15.2274 
+deposit,5,10030,99.99
+ deposit , 10 , 10049 , 10.339 
+ deposit , 18 , 10050 , 7.0432 
+chargeback,3,782871
+ deposit , 4 , 10051 , 5.6433 
+deposit,12,10030,99.99
+withdrawal,9,10052,20.5885
+ deposit , 19 , 10053 , 5.8342 
+resolve,15,10021
+withdrawal,8,10054,1.7505
+withdrawal,6,10055,2.1876
+ deposit , 1 , 10056 , 1.8344 
+ deposit , 11 , 10057 , 11.2552 
+withdrawal,14,10058,3.5453
+ deposit , 4 , 10059 , 11.6388 
+resolve,10,10049
+withdrawal,8,10060,12.6013
+ deposit , 8 , 10061 , 22.1147 
+ deposit , 18 , 10062 , 5.2761 
+ deposit , 15 , 10063 , 1.2849 
+withdrawal,17,10064,13.6956
+deposit,17,10015,99.99
+deposit,2,10025,99.99
+withdrawal,4,10065,2.1069
+dispute,14,10041
+deposit,4,10022,99.99
+withdrawal,4,10066,4.9457
+withdrawal,6,10067,0.55
+ deposit , 5 , 10068 , 17.0577 
+resolve,9,10014
+ deposit , 5 , 10069 , 19.0007 
+deposit,5,10039,99.99
+resolve,7,738127
+ deposit , 16 , 10070 , 6.1545 
+deposit,14,10018,99.99
+withdrawal,12,10071,23.832
+ deposit , 14 , 10072 , 16.152 
+ deposit , 14 , 10073 , 21.6376 
+resolve,2,10024
+chargeback,18,10033
+withdrawal,1,10074,26.5927
+ deposit , 7 , 10075 , 7.2297 
+ deposit , 7 , 10076 , 18.7069 
+ deposit , 19 , 10077 , 14.9986 
+deposit,16,10202,-1.25
+ deposit , 18 , 10078 , 9.5984 
+withdrawal,18
+withdrawal,8,10079,14.9941
+ deposit , 6 , 10080 , 1.361 
+ deposit , 9 , 10081 , 9.0965 
+deposit,13,10212,0.0
+dispute,20,244513
+withdrawal,8,10082,4.8524
+deposit,3,10068,99.99
+withdrawal,9,10083,12.4466
+dispute,11,10057
+ deposit , 9 , 10084 , 6.1275 
+chargeback,10,10026
+dispute,15,829664
+ deposit , 2 , 10085 , 15.0878 
+refund,12,10226,5.0
+withdrawal,2
+chargeback,17,10013
+resolve,7,10076
+ deposit , 5 , 10086 , 4.1939 
+dispute,5,10086
+withdrawal,11,10087,7.34
+withdrawal,2,10088,9.1836
+withdrawal,2
+ deposit , 18 , 10089 , 19.1092 
+ deposit , 7 , 10090 , 10.5455 
+ deposit , 10 , 10091 , 8.8104 
+ deposit , 15 , 10092 , 11.1827 
+withdrawal,16,10093,5.5152
+ deposit , 12 , 10094 , 1.2732 
+ deposit , 1 , 10095 , 14.6244 
+deposit,18,10060,99.99
+ deposit , 2 , 10096 , 13.4114 
+withdrawal,20,10097,19.2682
+ deposit , 17 , 10098 , 0.2888 
+chargeback,8,10060
+dispute,17,936687
+resolve,15,618214
+withdrawal,3,10099,8.7148
+deposit,5,10264,0.0
+chargeback,8,880117
+ deposit , 12 , 10100 , 22.7934 
+ deposit , 3 , 10101 , 22.8403 
+dispute,18,10089
+chargeback,18,593127
+ deposit , 1 , 10102 , 17.4958 
+deposit,11,10036,99.99
+deposit,20,10024,99.99
+ deposit , 12 , 10103 , 10.8472 
+deposit,6,10060,99.99
+dispute,7,10025
+withdrawal,19,10104,25.7035
+deposit,4,10017,99.99
+dispute,6,10033
+resolve,20,10008
+ deposit , 14 , 10105 , 16.9374 
+withdrawal,12,10106,28.4211
+deposit,2,10032,99.99
+ deposit , 11 , 10107 , 17.1025 
+ deposit , 2 , 10108 , 12.4502 
+ deposit , 5 , 10109 , 5.5454 
+ deposit , 18 , 10110 , 20.734 
+deposit,4,10022,99.99
+dispute,8,898664
+chargeback,2,174134
+withdrawal,1,10111,0.1644
+ deposit , 16 , 10112 , 6.8218 
+chargeback,10,733437
+withdrawal,15,10113,12.3761
+ deposit , 5 , 10114 , 14.0777 
+withdrawal,1,10115,22.1566
+ deposit , 19 , 10116 , 7.7447 
+chargeback,18,830068
+withdrawal,8,10117,18.0185
+resolve,4,10051
+resolve,7,10076
+withdrawal,3,10118,19.7596
+withdrawal,9,10119,27.7019
+ deposit , 11 , 10120 , 20.5959 
+ deposit , 12 , 10121 , 15.2806 
+ deposit , 17 , 10122 , 14.6873 
+deposit,5,10025,99.99
+ deposit , 1 , 10123 , 24.8593 
+dispute,14,10104
+withdrawal,1,10124,16.309
+ deposit , 12 , 10125 , 5.715 
+ deposit , 16 , 10126 , 8.8499 
+dispute,13,36631
+ deposit , 10 , 10127 , 12.6931 
+ deposit , 13 , 10128 , 24.6036 
+deposit,20,10124,99.99
+resolve,5,10068
+withdrawal,18,10129,29.5818
+withdrawal,16,10130,11.2029
+ deposit , 3 , 10131 , 6.8807 
+withdrawal,11,10132,16.2407
+resolve,1,10017
+dispute,12,10100
+resolve,12,10106
+dispute,11,10120
+ deposit , 10 , 10133 , 8.1609 
+ deposit , 9 , 10134 , 18.631 
+dispute,14,980820
+dispute,9,10043
+ deposit , 12 , 10135 , 8.4558 
+dispute,11,10107
+ deposit , 9 , 10136 , 13.649 
+dispute,16,10070
+dispute,2,170971
+ deposit , 17 , 10137 , 15.7295 
+dispute,18,10042
+ deposit , 6 , 10138 , 22.286 
+resolve,5,10068
+dispute,14,10067
+ deposit , 19 , 10139 , 4.9299 
+deposit,3,10380,0.0
+ deposit , 18 , 10140 , 7.6714 
+deposit,3,10080,99.99
+ deposit , 1 , 10141 , 0.3516 
+ deposit , 12 , 10142 , 24.4065 
+resolve,2,10096
+withdrawal,15,10143,1.1513
+deposit,4,10017,99.99
+resolve,14,10058
+ deposit , 5 , 10144 , 12.9223 
+chargeback,1,10141
+ deposit , 1 , 10145 , 7.5001 
+withdrawal,12,10146,29.0947
+resolve,18,10060
+withdrawal,5,10147,0.6614
+ deposit , 11 , 10148 , 2.0408 
+withdrawal,5,10149,29.5495
+withdrawal,19,10150,15.2201
+dispute,19,110200
+ deposit , 7 , 10151 , 1.1073 
+chargeback,10,10049
+ deposit , 5 , 10152 , 22.7241 
+resolve,6,10083
+ deposit , 11 , 10153 , 18.4288 
+withdrawal,11,10154,29.3976
+withdrawal,15,10155,13.4458
+resolve,9,10014
+withdrawal,14,10156,17.8638
+ deposit , 3 , 10157 , 20.2533 
+dispute,19,10081
+refund,16,10428,5.0
+deposit,7,10115,99.99
+deposit,19,10430,0.0
+dispute,17,10099
+dispute,20,194354
+deposit,20,10125,99.99
+withdrawal,17,10158,24.1088
+withdrawal,6,10159,7.288
+withdrawal,3,10160,29.1395
+chargeback,11,98519
+ deposit , 5 , 10161 , 8.1546 
+ deposit , 18 , 10162 , 5.4957 
+dispute,19,10028
+ deposit , 13 , 10163 , 11.5355 
+ deposit , 2 , 10164 , 11.7349 
+dispute,18,10050
+ deposit , 17 , 10165 , 3.8199 
+ deposit , 1 , 10166 , 17.9419 
+dispute,9,10035
+ deposit , 4 , 10167 , 3.2122 
+withdrawal,18,10168,7.3955
+resolve,6,10008
+ deposit , 17 , 10169 , 24.4086 
+deposit,4,10145,99.99
+withdrawal,15,10170,4.2083
+refund,20,10466,5.0
+withdrawal,10,10171,22.8695
+ deposit , 19 , 10172 , 23.4602 
+withdrawal,4,10173,25.6749
+ deposit , 12 , 10174 , 23.9295 
+ deposit , 10 , 10175 , 13.7846 
+ deposit , 4 , 10176 , 0.3966 
+deposit,11,10479,-1.25
+withdrawal,2,10177,19.9011
+ deposit , 17 , 10178 , 6.5419 
+ deposit , 6 , 10179 , 0.9451 
+withdrawal,1,10180,1.2585
+resolve,1,10095
+ deposit , 19 , 10181 , 16.0411 
+withdrawal,12,10182,8.1104
+withdrawal,6,10183,0.7094
+withdrawal,10,10184,25.2836
+withdrawal,5,10185,2.1418
+resolve,13,10019
+ deposit , 18 , 10186 , 3.6642 
+ deposit , 6 , 10187 , 14.5883 
+ deposit , 9 , 10188 , 4.6723 
+ deposit , 8 , 10189 , 4.8804 
+withdrawal,5,10190,2.0932
+ deposit , 17 , 10191 , 20.2074 
+ deposit , 1 , 10192 , 7.6147 
+withdrawal,5,10193,28.4177
+deposit,1,10104,99.99
+withdrawal,14,10194,8.1222
+chargeback,17,10065
+withdrawal,18,10195,19.4107
+withdrawal,9,10196,2.0392
+dispute,15,10143
+ deposit , 7 , 10197 , 4.226 
+withdrawal,3,10198,4.3425
+deposit,5,10529,-1.25
+dispute,3,10017
+ deposit , 2 , 10199 , 17.8688 
+withdrawal,10,10200,28.1419
+deposit,11,10017,99.99
+ deposit , 18 , 10201 , 18.8653 
+dispute,18,10007
+ deposit , 18 , 10202 , 7.248 
+ deposit , 1 , 10203 , 23.3987 
+withdrawal,4,10204,0.826
+withdrawal,7,10205,24.1459
+withdrawal,13,10206,17.3628
+dispute,18,10110
+ deposit , 11 , 10207 , 7.7073 
+dispute,19,10139
+dispute,9,10136
+chargeback,5,502851
+deposit,5,10555,-1.25
+ deposit , 3 , 10208 , 19.1209 
+dispute,11,10207
+resolve,16,744866
+withdrawal,19,10209,24.979
+ deposit , 14 , 10210 , 22.1327 
+ deposit , 16 , 10211 , 5.1073 
+ deposit , 18 , 10212 , 20.5374 
+ deposit , 13 , 10213 , 9.138 
+ deposit , 18 , 10214 , 6.4051 
+deposit,2,10002,99.99
+resolve,10,171861
+withdrawal,14,10215,27.217
+resolve,19,10209
+withdrawal,3,10216,14.4386
+withdrawal,19,10217,21.27
+ deposit , 12 , 10218 , 18.4243 
+withdrawal,16,10219,16.6362
+ deposit , 1 , 10220 , 3.9126 
+ deposit , 2 , 10221 , 23.4334 
+ deposit , 20 , 10222 , 1.9956 
+withdrawal,13,10223,23.711
+withdrawal,16,10224,25.5196
+resolve,3,10099
+ deposit , 12 , 10225 , 24.4162 
+dispute,3,486704
+deposit,11,10599,0.0
+withdrawal,6,10226,19.4567
+dispute,2,10090
+withdrawal,9,10227,10.946
+dispute,13,10184
+resolve,5,10069
+ deposit , 2 , 10228 , 8.7405 
+deposit,15,10609,0.0
+chargeback,10,10184
+dispute,17,10064
+dispute,11,10003
+deposit,5,10153,99.99
+dispute,5,10147
+withdrawal,12,10229,7.9389
+resolve,2,10221
+ deposit , 11 , 10230 , 16.4957 
+deposit,19,10620,0.0
+withdrawal,17,10231,3.3421
+ deposit , 18 , 10232 , 1.9314 
+deposit,6,10232,99.99
+ deposit , 6 , 10233 , 14.2849 
+withdrawal,11,10234,5.1207
+ deposit , 18 , 10235 , 12.6331 
+ deposit , 8 , 10236 , 6.4663 
+dispute,13,453176
+ deposit , 17 , 10237 , 6.8665 
+resolve,9,10052

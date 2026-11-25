@@ -1,0 +1,44 @@
+[package]
+name = "transaction-engine-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+arbitrary = { version = "1", features = ["derive"] }
+csv = "1.4.0"
+
+[dependencies.transaction-engine]
+path = ".."
+
+# Standalone workspace so the fuzz crate never joins the main build.
+[workspace]
+members = ["."]
+
+[profile.release]
+debug = 1
+
+[[bin]]
+name = "engine_model"
+path = "fuzz_targets/engine_model.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "csv_pipeline"
+path = "fuzz_targets/csv_pipeline.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "amount_parse"
+path = "fuzz_targets/amount_parse.rs"
+test = false
+doc = false
+bench = false
