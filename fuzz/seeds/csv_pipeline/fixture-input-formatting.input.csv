@@ -1,6 +1,0 @@
-type, tx, client, amount
-deposit, 1, 7, 10.0
-  deposit ,2,7, 5.0
-withdrawal, 3, 7, 4.0
-dispute, 1, 7
-resolve , 1, 7,

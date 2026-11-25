@@ -113,3 +113,9 @@ disputes, duplicate IDs, formatting, malformed rows, and amount edge cases.
 ```sh
 cargo test --release --test large_stream -- --ignored
 ```
+
+- **Fuzzing** (`fuzz/`, nightly + `cargo-fuzz`, outside `cargo test`): `engine_model` applies structured Record sequences to the `Engine` and to an independent `i128` reference model, checking every result, every balance and the invariants after each step; `csv_pipeline` feeds raw bytes through `run`, seeded with the fixtures; `amount_parse` checks `Amount` parsing against a reference parser and a format/parse round trip. Run all three in parallel for a time budget in seconds (default 7200):
+
+```sh
+fuzz/run.sh 600
+```

@@ -105,16 +105,17 @@ impl Gen {
     }
 }
 
-/// Always positive: the CSV adapter guarantees it and the Engine debug-asserts it.
+/// Any amount, including zero and negative: `Transaction::new` must reject
+/// exactly the non-positive ones, which the target then skips.
 fn amount(a: &Amt) -> Amount {
     let units = match *a {
         Amt::Units(u) => u as i64,
         Amt::Whole(w) => w as i64 * 10_000,
         Amt::NearMax(d) => i64::MAX - d as i64,
         Amt::Fraction(d) => i64::MAX / (d as i64 % 8 + 1),
-        Amt::Raw(r) => r.checked_abs().unwrap_or(i64::MAX),
+        Amt::Raw(r) => r,
     };
-    Amount::from_units(units.max(1))
+    Amount::from_units(units)
 }
 
 fuzz_target!(|data: &[u8]| {
@@ -131,16 +132,22 @@ fuzz_target!(|data: &[u8]| {
     for op in ops.take(4096) {
         let Ok(op) = op else { break };
         let record = match &op {
-            Op::Deposit(c, t, a) | Op::Withdrawal(c, t, a) => Record::Transaction(Transaction {
-                client: g.client(c),
-                transaction_id: g.tx(t),
-                kind: if matches!(op, Op::Deposit(..)) {
+            Op::Deposit(c, t, a) | Op::Withdrawal(c, t, a) => {
+                let kind = if matches!(op, Op::Deposit(..)) {
                     TransactionKind::Deposit
                 } else {
                     TransactionKind::Withdrawal
-                },
-                amount: amount(a),
-            }),
+                };
+                let amount = amount(a);
+                match Transaction::new(g.client(c), g.tx(t), kind, amount) {
+                    Ok(transaction) => Record::Transaction(transaction),
+                    Err(rejected) => {
+                        assert!(amount <= Amount::ZERO, "positive {amount} refused");
+                        assert_eq!(rejected.0, amount);
+                        continue;
+                    }
+                }
+            }
             Op::Dispute(c, t) | Op::Resolve(c, t) | Op::Chargeback(c, t) => {
                 Record::DisputeAction(DisputeAction {
                     client: g.client(c),
@@ -167,7 +174,7 @@ fuzz_target!(|data: &[u8]| {
             // non-duplicate Transaction for a new Client, which creates a zero Account.
             let mut expected = before.clone();
             if let Record::Transaction(t) = record {
-                let c = t.client.get();
+                let c = t.client().get();
                 if got != Err(Rejection::DuplicateTransactionId) {
                     if let Err(pos) = expected.binary_search_by_key(&c, |r| r.0) {
                         expected.insert(pos, (c, 0, 0, 0, false));
@@ -182,7 +189,10 @@ fuzz_target!(|data: &[u8]| {
 
         // Locked never clears.
         for b in before.iter().filter(|b| b.4) {
-            let a = after.iter().find(|a| a.0 == b.0).expect("accounts are never removed");
+            let a = after
+                .iter()
+                .find(|a| a.0 == b.0)
+                .expect("accounts are never removed");
             assert!(a.4, "client {} was unlocked by {record:?}", b.0);
         }
         assert!(after.len() >= before.len(), "an Account disappeared");

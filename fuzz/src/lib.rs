@@ -9,8 +9,7 @@
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 use transaction_engine::{
-    Account, Amount, DisputeAction, DisputeKind, Engine, Record, Rejection, Transaction,
-    TransactionKind,
+    Account, Amount, DisputeAction, DisputeKind, Engine, Record, Rejection, TransactionKind,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -51,12 +50,13 @@ fn balances_fit(available: i128, held: i128) -> bool {
 impl Model {
     pub fn apply(&mut self, record: &Record) -> Result<(), Rejection> {
         match *record {
-            Record::Transaction(Transaction {
-                client,
-                transaction_id,
-                kind,
-                amount,
-            }) => {
+            Record::Transaction(transaction) => {
+                let (client, transaction_id, kind, amount) = (
+                    transaction.client(),
+                    transaction.transaction_id(),
+                    transaction.kind(),
+                    transaction.amount(),
+                );
                 let id = transaction_id.get();
                 if self.seen.contains(&id) {
                     return Err(Rejection::DuplicateTransactionId);
@@ -116,12 +116,9 @@ impl Model {
                         acct.held - amount,
                         false,
                     ),
-                    (DisputeKind::Chargeback, State::Disputed) => (
-                        State::ChargedBack,
-                        acct.available,
-                        acct.held - amount,
-                        true,
-                    ),
+                    (DisputeKind::Chargeback, State::Disputed) => {
+                        (State::ChargedBack, acct.available, acct.held - amount, true)
+                    }
                     _ => return Err(Rejection::WrongState),
                 };
                 if !balances_fit(available, held) {
@@ -161,7 +158,10 @@ impl Model {
                 .filter(|(_, s)| *s == State::Disputed)
                 .map(|(amt, _)| amt)
                 .sum();
-            assert_eq!(a.held, disputed, "model: client {client} held != sum of disputed");
+            assert_eq!(
+                a.held, disputed,
+                "model: client {client} held != sum of disputed"
+            );
         }
     }
 }

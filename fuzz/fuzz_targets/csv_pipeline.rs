@@ -29,9 +29,7 @@ fn model_report(data: &[u8]) -> Option<Vec<Row>> {
 }
 
 fn parse_report(out: &[u8]) -> Vec<Row> {
-    let mut reader = csv::ReaderBuilder::new()
-        .has_headers(true)
-        .from_reader(out);
+    let mut reader = csv::ReaderBuilder::new().has_headers(true).from_reader(out);
     let header = reader.headers().expect("report header readable").clone();
     assert_eq!(
         header.iter().collect::<Vec<_>>(),
@@ -72,7 +70,10 @@ fuzz_target!(|data: &[u8]| {
     match result {
         Err(_) => {
             assert!(out.is_empty(), "fatal error but output was written");
-            assert!(expected.is_none(), "run failed but RecordReader read everything");
+            assert!(
+                expected.is_none(),
+                "run failed but RecordReader read everything"
+            );
         }
         Ok(()) => {
             let rows = parse_report(&out);

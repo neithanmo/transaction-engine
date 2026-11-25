@@ -19,11 +19,12 @@ JOBS=${JOBS:-$(( ($(nproc) - 2) / 2 > 0 ? ($(nproc) - 2) / 2 : 1 ))}
 LOGS=fuzz/logs
 mkdir -p "$LOGS"
 
-# Copy the seeds into the working corpus; libFuzzer adds what it finds there.
+# Copy the seeds (and acceptance fixtures) into the working corpus; libFuzzer adds what it finds there.
 for t in csv_pipeline amount_parse engine_model; do
   mkdir -p "fuzz/corpus/$t"
   [ -d "fuzz/seeds/$t" ] && cp -n fuzz/seeds/$t/* "fuzz/corpus/$t/" 2>/dev/null || true
 done
+cp -n tests/fixtures/*.input.csv fuzz/corpus/csv_pipeline/ 2>/dev/null || true
 
 cargo +nightly fuzz build
 
