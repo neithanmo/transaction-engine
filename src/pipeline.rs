@@ -25,7 +25,13 @@ impl Warnings {
     fn malformed(&mut self, line: u64, reason: &Malformed) {
         self.malformed += 1;
         if self.malformed <= MAX_WARNINGS {
-            eprintln!("warning: line {line}: malformed record: {reason}");
+            // do not panic in case sstderr is closed/broken
+            // a better design would be to take a log: impl Write<>
+            // argument and pipe warning messages through it
+            let _ = writeln!(
+                io::stderr(),
+                "warning: line {line}: malformed record: {reason}"
+            );
         }
     }
 
@@ -33,7 +39,10 @@ impl Warnings {
     fn finish(self) {
         let omitted = self.malformed.saturating_sub(MAX_WARNINGS);
         if omitted > 0 {
-            eprintln!("warning: {omitted} additional malformed records omitted");
+            let _ = writeln!(
+                io::stderr(),
+                "warning: {omitted} additional malformed records omitted"
+            );
         }
     }
 }
