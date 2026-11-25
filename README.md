@@ -69,7 +69,7 @@ Whitespace around fields and headers is trimmed, columns are matched by header n
 
 A fatal error prints nothing, because balances from a half-read file would look final but be wrong. CSV has no framing, so a stream truncated mid-line cannot be told apart from a short row: it shows up as a Malformed Record, or, if cut inside the amount (`1.` for `1.5`), it is silently read as a smaller value.
 
-Output rows are sorted by client id and every amount is printed with four decimal places.
+Output rows are sorted by client id. Amounts are printed without trailing zeros but with at least one decimal place: `1.5`, `1.0001`, `2.0`, `0.0`.
 
 ## Scaling
 

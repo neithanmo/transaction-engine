@@ -1,6 +1,6 @@
 # Amounts are fixed-point `i64`
 
-The input spec gives amounts with up to four decimal places and expects four in the output. We store every Amount as a whole number of 0.0001 units in an `i64`, parsed straight from the decimal text, so no rounding ever happens and arithmetic is exact. The `Amount` newtype is the only place that knows the representation.
+The input spec gives amounts with up to four decimal places and expects the same precision in the output. We store every Amount as a whole number of 0.0001 units in an `i64`, parsed straight from the decimal text, so no rounding ever happens and arithmetic is exact. The `Amount` newtype is the only place that knows the representation.
 
 ## Considered Options
 
