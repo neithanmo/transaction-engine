@@ -16,7 +16,7 @@ Every `*.expected.csv` follows the report format from the README and issue #1:
 
 - header `client,available,held,total,locked`;
 - one row per Account, **sorted by client id**;
-- every amount printed with **exactly four decimal places**;
+- every amount printed **without trailing zeros, keeping at least one decimal place** (`1.5`, `1.0001`, `2.0`, `0.0`);
 - `locked` as `true` / `false`;
 - `total` always equals `available + held`.
 
@@ -42,9 +42,9 @@ Every `*.expected.csv` follows the report format from the README and issue #1:
 
 - `locked-account-behaviour`: after the Lock the Account holds 100; the Withdrawal of 50
   is Rejected (so Available stays 100), and the new Deposit of 25 is accepted, Disputed
-  and Charged back, which nets to zero — leaving `100.0000`.
+  and Charged back, which nets to zero — leaving `100.0`.
 - `duplicate-transaction-ids`: Client 1 keeps `100 + 10`; Client 2's Account exists at
   zero because its over-Available Withdrawal used up id `2` before the duplicate Deposit;
   Client 3 never appears because its Deposit reused id `3`.
 - `amount-edge-cases`: Client 1 is `1.2345 + 2.5`; the two 900-trillion Deposits for
-  Client 2 overflow on the second, so only the first (`900000000000000.0000`) stands.
+  Client 2 overflow on the second, so only the first (`900000000000000.0`) stands.
